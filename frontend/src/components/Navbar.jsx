@@ -14,16 +14,17 @@ export default function Navbar() {
             <img 
               src="/convenio%20mart%20logo.webp" 
               alt="Convenio Mart Logo" 
-              className="h-12 w-auto object-contain"
+              className="h-10 sm:h-12 w-auto object-contain"
             />
           </Link>
           <div>
             {!isEnquirePage ? (
               <Link
                 to="/enquire"
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 shadow-sm transition-all duration-200"
+                className="inline-flex items-center justify-center px-4 py-2 sm:px-6 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 shadow-sm transition-all duration-200 whitespace-nowrap"
               >
-                Enquire your franchise
+                <span className="sm:hidden">Enquire Now</span>
+                <span className="hidden sm:inline">Enquire your franchise</span>
               </Link>
             ) : (
               <Link 
