@@ -29,28 +29,28 @@ export default function LandingView() {
   return (
     <div className="bg-slate-50 min-h-[calc(100vh-5rem)] md:h-[calc(100vh-5rem)] flex items-stretch justify-center p-4 sm:p-8 md:overflow-hidden">
       <div className="max-w-6xl w-full mx-auto bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row h-auto md:h-full">
-        
+
         {/* Left Side */}
         <div className="w-full md:w-1/2 p-6 flex flex-col justify-center items-center md:items-start gap-4 lg:gap-6 relative bg-slate-50 border-b md:border-b-0 md:border-r border-slate-200 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-slate-100 opacity-50"></div>
-          
+
           <div className="relative z-10 w-full flex flex-col justify-center">
-            <img 
-              src="/logo.jpeg" 
-              alt="Convenio Mart Store" 
+            <img
+              src="/logo.jpeg"
+              alt="Convenio Mart Store"
               className="w-full max-h-[30vh] lg:max-h-56 rounded-2xl shadow-xl object-cover border-4 border-white transform transition-transform hover:scale-[1.02] duration-300"
             />
           </div>
-          
+
           <div className="relative z-10 w-full text-center md:text-left">
-             <h1 className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-2 leading-tight">
-              Convenio<span className="text-red-600">Mart</span>
-             </h1>
-             <p className="text-sm lg:text-base text-slate-600">Premium Mini-Supermarket Franchise Opportunity</p>
+            <h1 className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-2 leading-tight">
+              Convenio  <span className="text-red-600">Mart</span>
+            </h1>
+            <p className="text-sm lg:text-base text-slate-600">Premium Mini-Supermarket Franchise Opportunity</p>
           </div>
 
           <div className="relative z-10 w-full flex justify-center md:justify-start">
-            <a 
+            <a
               href="https://conveniomart.lordsandkingsagro.com/"
               target="_blank"
               rel="noopener noreferrer"
@@ -63,7 +63,7 @@ export default function LandingView() {
 
         {/* Right Side */}
         <div className="w-full md:w-1/2 p-6 lg:p-12 flex flex-col justify-center items-center gap-4 lg:gap-6 bg-white overflow-hidden">
-          
+
           <div className="w-full max-w-lg mb-2 lg:mb-4">
             <h2 className="text-xl lg:text-2xl font-extrabold text-slate-800 mb-4 text-center">Why Partner With Us?</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
@@ -82,7 +82,7 @@ export default function LandingView() {
             <ClipboardList className="h-6 w-6" />
             Apply Now
           </Link>
-          
+
           <a
             href="https://wa.me/918072557159?text=Hi%20Convenio%20Mart,%20I%20am%20interested%20in%20franchise%20details."
             target="_blank"

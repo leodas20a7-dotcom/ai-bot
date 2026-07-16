@@ -9,8 +9,6 @@ export default function FormView() {
     mobile: '',
     email: '',
     city: '',
-    propertyStatus: '',
-    carpetArea: '',
     message: ''
   });
   const [status, setStatus] = useState('');
@@ -39,8 +37,6 @@ export default function FormView() {
             mobile: formData.mobile,
             email: formData.email,
             city: formData.city,
-            property_status: formData.propertyStatus,
-            carpet_area: formData.carpetArea,
             message: formData.message,
             source: 'Website Form'
           }
@@ -150,33 +146,6 @@ export default function FormView() {
                     onChange={handleChange}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
                     placeholder="Chennai, Adyar"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Property Status *</label>
-                  <select
-                    name="propertyStatus"
-                    required
-                    value={formData.propertyStatus}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-white"
-                  >
-                    <option value="">Select Type</option>
-                    <option value="owned">Owned</option>
-                    <option value="rented">Rented</option>
-                    <option value="looking">Looking for Space</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Carpet Area (sq.ft) *</label>
-                  <input
-                    type="number"
-                    name="carpetArea"
-                    required
-                    value={formData.carpetArea}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                    placeholder="e.g. 500"
                   />
                 </div>
               </div>
