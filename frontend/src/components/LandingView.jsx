@@ -50,14 +50,12 @@ export default function LandingView() {
           </div>
 
           <div className="relative z-10 w-full flex justify-center md:justify-start">
-            <a
-              href="https://conveniomart.lordsandkingsagro.com/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/enquire"
               className="px-6 py-3 w-56 border-2 border-slate-800 text-slate-800 font-bold text-center rounded-2xl hover:bg-slate-800 hover:text-white transition-colors duration-300"
             >
               Visit our site
-            </a>
+            </Link>
           </div>        </div>
 
         {/* Right Side */}
