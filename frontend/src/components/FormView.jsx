@@ -56,9 +56,9 @@ export default function FormView() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-[calc(100vh-5rem)] md:h-[calc(100vh-5rem)] flex items-stretch justify-center p-4 sm:p-8 relative md:overflow-hidden">
+    <div className="bg-slate-50 min-h-[calc(100vh-5rem)] flex items-stretch justify-center p-4 sm:p-8 relative">
       
-      <div className="max-w-6xl w-full mx-auto bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row h-auto md:h-full">
+      <div className="max-w-6xl w-full mx-auto bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row h-auto">
         
         {/* Left Side - Dark Panel */}
         <div className="hidden lg:flex w-5/12 bg-slate-900 text-white p-6 lg:p-8 flex-col justify-center relative overflow-hidden">
