@@ -54,7 +54,7 @@ export default function LandingView() {
               to="/enquire"
               className="px-6 py-3 w-56 border-2 border-slate-800 text-slate-800 font-bold text-center rounded-2xl hover:bg-slate-800 hover:text-white transition-colors duration-300"
             >
-              Visit our site
+              Know more
             </Link>
           </div>        </div>
 
@@ -72,13 +72,7 @@ export default function LandingView() {
               ))}
             </div>
           </div>
-          <Link
-            to="/enquire"
-            className="w-full max-w-sm flex items-center justify-center gap-3 px-8 py-5 text-center text-lg font-bold rounded-2xl text-white bg-red-600 hover:bg-red-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-          >
-            <ClipboardList className="h-6 w-6" />
-            Know more
-          </Link>
+
 
           <a
             href="https://wa.me/918072557159?text=Hi%20Convenio%20Mart,%20I%20am%20interested%20in%20franchise%20details."

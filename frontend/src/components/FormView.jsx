@@ -84,6 +84,12 @@ export default function FormView() {
         {/* Right Side - Form */}
         <div className="w-full lg:w-7/12 bg-white px-6 py-6 lg:px-12 flex flex-col overflow-hidden">
         <div className="w-full max-w-2xl mx-auto my-auto">
+          {!status && (
+            <div className="mb-8">
+              <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-800 mb-2">Franchise Enquiry</h2>
+              <p className="text-slate-500 text-sm">Please provide your contact details below and our franchise experts will reach out to you shortly.</p>
+            </div>
+          )}
           {status === 'success' ? (
             <div className="text-center p-6 bg-green-50 rounded-2xl border border-green-100">
               <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
