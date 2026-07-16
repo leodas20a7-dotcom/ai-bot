@@ -12,6 +12,7 @@ export default function FormView() {
     message: ''
   });
   const [status, setStatus] = useState('');
+  const [showMessageBox, setShowMessageBox] = useState(false);
 
   const features = [
     "Low Investment",
@@ -150,17 +151,34 @@ export default function FormView() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Message (Optional)</label>
-                <textarea
-                  name="message"
-                  rows="2"
-                  value={formData.message}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all resize-none"
-                  placeholder="Tell us why you want to partner with us..."
-                ></textarea>
+              <div className="flex items-center gap-2 mb-2 mt-2">
+                <input 
+                  type="checkbox" 
+                  id="showMessageBox" 
+                  checked={showMessageBox}
+                  onChange={(e) => {
+                    setShowMessageBox(e.target.checked);
+                    if (!e.target.checked) setFormData({ ...formData, message: '' });
+                  }}
+                  className="w-4 h-4 text-red-600 rounded border-slate-300 focus:ring-red-500 cursor-pointer"
+                />
+                <label htmlFor="showMessageBox" className="text-sm font-bold text-slate-700 cursor-pointer select-none">
+                  Add a message (Optional)
+                </label>
               </div>
+
+              {showMessageBox && (
+                <div className="mb-4">
+                  <textarea
+                    name="message"
+                    rows="2"
+                    value={formData.message}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all resize-none"
+                    placeholder="Tell us why you want to partner with us..."
+                  ></textarea>
+                </div>
+              )}
 
               <button
                 type="submit"

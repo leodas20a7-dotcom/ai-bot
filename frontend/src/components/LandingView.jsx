@@ -71,7 +71,7 @@ export default function LandingView() {
             className="w-full max-w-sm flex items-center justify-center gap-3 px-8 py-5 text-center text-lg font-bold rounded-2xl text-white bg-red-600 hover:bg-red-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
           >
             <ClipboardList className="h-6 w-6" />
-            Apply Now
+            Know more
           </Link>
 
           <a
