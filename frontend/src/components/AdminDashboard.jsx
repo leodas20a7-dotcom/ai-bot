@@ -1,6 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { LogOut, RefreshCcw, Database, MessageSquare, ClipboardList, Calendar, X, Search, MapPin, Filter } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { LogOut, RefreshCcw, Database, MessageSquare, ClipboardList, Calendar, X, Search, MapPin, Filter, ChevronUp, ChevronDown, Download, MoreVertical } from 'lucide-react';
+
+// Helper for avatars
+const getInitials = (name) => {
+  if (!name) return '??';
+  const names = name.split(' ').filter(n => n.length > 0);
+  if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
+  return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+};
+
+const getAvatarColor = (name) => {
+  const colors = ['bg-red-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500'];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+// Helper for budget parsing to number (rough estimate)
+const parseBudget = (budgetStr) => {
+  if (!budgetStr) return 0;
+  let str = budgetStr.toLowerCase().replace(/,/g, '');
+  if (str.includes('lakh')) {
+    return parseFloat(str) * 100000;
+  } else if (str.includes('crore')) {
+    return parseFloat(str) * 10000000;
+  }
+  return parseFloat(str) || 0;
+};
 
 export default function AdminDashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState('forms');
@@ -9,11 +40,15 @@ export default function AdminDashboard({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [selectedTranscript, setSelectedTranscript] = useState(null);
 
+  // Sort state
+  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -74,12 +109,108 @@ export default function AdminDashboard({ onLogout }) {
         }
       }
 
-      return matchesSearch && matchesLocation && matchesDate;
+      const matchesStatus = statusFilter === '' || (item.status && item.status.toLowerCase() === statusFilter.toLowerCase()) || (!item.status && statusFilter.toLowerCase() === 'new');
+
+      return matchesSearch && matchesLocation && matchesDate && matchesStatus;
     });
   };
 
-  const filteredLeads = React.useMemo(() => filterData(leads), [leads, searchTerm, startDate, endDate, locationFilter]);
-  const filteredChatLeads = React.useMemo(() => filterData(chatLeads), [chatLeads, searchTerm, startDate, endDate, locationFilter]);
+  const sortData = (data) => {
+    if (!sortConfig.key) return data;
+    return [...data].sort((a, b) => {
+      let valA = a[sortConfig.key];
+      let valB = b[sortConfig.key];
+      
+      if (sortConfig.key === 'budget') {
+        valA = parseBudget(valA);
+        valB = parseBudget(valB);
+      } else if (sortConfig.key === 'created_at') {
+        valA = new Date(valA).getTime();
+        valB = new Date(valB).getTime();
+      } else {
+        valA = valA ? valA.toString().toLowerCase() : '';
+        valB = valB ? valB.toString().toLowerCase() : '';
+      }
+
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
+  const filteredLeads = React.useMemo(() => sortData(filterData(leads)), [leads, searchTerm, startDate, endDate, locationFilter, sortConfig, statusFilter]);
+  const filteredChatLeads = React.useMemo(() => sortData(filterData(chatLeads)), [chatLeads, searchTerm, startDate, endDate, locationFilter, sortConfig, statusFilter]);
+
+  
+  const handleStatusChange = async (id, table, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from(table)
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      if (table === 'leads') {
+        setLeads(leads.map(lead => lead.id === id ? { ...lead, status: newStatus } : lead));
+      } else {
+        setChatLeads(chatLeads.map(lead => lead.id === id ? { ...lead, status: newStatus } : lead));
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update status.');
+    }
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const SortIcon = ({ columnKey }) => {
+    if (sortConfig.key !== columnKey) return <ChevronUp className="h-3 w-3 text-slate-300 inline-block ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />;
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="h-3 w-3 text-slate-600 inline-block ml-1" />
+      : <ChevronDown className="h-3 w-3 text-slate-600 inline-block ml-1" />;
+  };
+
+  const exportToExcel = () => {
+    const dataToExport = activeTab === 'forms' ? filteredLeads : filteredChatLeads;
+    if (dataToExport.length === 0) return alert("No data to export");
+
+    let formattedData;
+    if (activeTab === 'forms') {
+      formattedData = dataToExport.map(row => ({
+        Date: new Date(row.created_at).toLocaleString(),
+        Name: row.name || '',
+        Mobile: row.mobile || '',
+        Email: row.email || '',
+        City: row.city || '',
+        'Property Status': row.property_status || '',
+        'Carpet Area': row.carpet_area || '',
+        Message: row.message || '',
+        Status: row.status || 'New'
+      }));
+    } else {
+      formattedData = dataToExport.map(row => ({
+        Date: new Date(row.created_at).toLocaleString(),
+        Name: row.name || '',
+        Phone: row.phone || '',
+        Area: row.area || '',
+        Budget: row.budget || '',
+        Transcript: row.transcript || '',
+        Status: row.status || 'New'
+      }));
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
+    XLSX.writeFile(workbook, `leads_export_${new Date().getTime()}.xlsx`);
+  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -136,6 +267,14 @@ export default function AdminDashboard({ onLogout }) {
         </div>
         <div className="flex items-center gap-4">
           <button 
+            onClick={exportToExcel}
+            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg"
+            title="Export to Excel"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export</span>
+          </button>
+          <button 
             onClick={fetchData}
             className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg"
             title="Refresh Data"
@@ -162,23 +301,23 @@ export default function AdminDashboard({ onLogout }) {
             onClick={() => setActiveTab('forms')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
               activeTab === 'forms' 
-                ? 'bg-white text-slate-900 shadow-sm' 
+                ? 'bg-red-600 text-white shadow-md' 
                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'
             }`}
           >
             <ClipboardList className="h-4 w-4" />
-            Form Leads <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs ml-1">{filteredLeads.length}</span>
+            Form Leads <span className={`px-2 py-0.5 rounded-full text-xs ml-1 ${activeTab === 'forms' ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-600'}`}>{filteredLeads.length}</span>
           </button>
           <button
             onClick={() => setActiveTab('chats')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
               activeTab === 'chats' 
-                ? 'bg-white text-slate-900 shadow-sm' 
+                ? 'bg-red-600 text-white shadow-md' 
                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'
             }`}
           >
             <MessageSquare className="h-4 w-4" />
-            Chat Leads <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs ml-1">{filteredChatLeads.length}</span>
+            Chat Leads <span className={`px-2 py-0.5 rounded-full text-xs ml-1 ${activeTab === 'chats' ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-600'}`}>{filteredChatLeads.length}</span>
           </button>
         </div>
 
@@ -232,8 +371,22 @@ export default function AdminDashboard({ onLogout }) {
             />
           </div>
 
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-xs font-bold text-slate-700 mb-1">Status</label>
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white"
+            >
+              <option value="">All Statuses</option>
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+
           <button 
-            onClick={() => { setSearchTerm(''); setLocationFilter(''); setStartDate(''); setEndDate(''); }}
+            onClick={() => { setSearchTerm(''); setLocationFilter(''); setStartDate(''); setEndDate(''); setStatusFilter(''); }}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors h-[38px]"
           >
             <Filter className="h-4 w-4" />
@@ -250,34 +403,53 @@ export default function AdminDashboard({ onLogout }) {
           ) : activeTab === 'forms' ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-slate-700 text-xs uppercase font-bold border-b border-slate-200">
+                <thead className="bg-slate-50 text-slate-700 text-xs uppercase font-bold border-b border-slate-200 select-none">
                   <tr>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4">Name</th>
+                    <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors" onClick={() => handleSort('created_at')}>Date <SortIcon columnKey="created_at" /></th>
+                    <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors" onClick={() => handleSort('name')}>Name <SortIcon columnKey="name" /></th>
                     <th className="px-6 py-4">Contact</th>
-                    <th className="px-6 py-4">Location</th>
+                    <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors" onClick={() => handleSort('city')}>Location <SortIcon columnKey="city" /></th>
                     <th className="px-6 py-4">Property</th>
                     <th className="px-6 py-4">Message</th>
+                    <th className="px-6 py-4 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredLeads.length === 0 ? (
-                    <tr><td colSpan="6" className="text-center py-8 text-slate-400 italic">No form leads found matching filters.</td></tr>
+                    <tr><td colSpan="7" className="text-center py-8 text-slate-400 italic">No form leads found matching filters.</td></tr>
                   ) : (
                     filteredLeads.map(lead => (
-                      <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr key={lead.id} className="hover:bg-slate-50 transition-colors group">
                         <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-500 flex items-center gap-1"><Calendar className="h-3 w-3"/> {formatDate(lead.created_at)}</td>
-                        <td className="px-6 py-4 font-medium text-slate-900">{lead.name}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs ${getAvatarColor(lead.name)} shadow-sm`}>
+                              {getInitials(lead.name)}
+                            </div>
+                            <span className="font-medium text-slate-900">{lead.name}</span>
+                          </div>
+                        </td>
                         <td className="px-6 py-4">
                           <div>{lead.mobile}</div>
                           <div className="text-xs text-slate-400">{lead.email}</div>
                         </td>
                         <td className="px-6 py-4">{lead.city}</td>
                         <td className="px-6 py-4">
-                          <span className="capitalize bg-slate-100 px-2 py-1 rounded-md text-xs font-medium">{lead.property_status}</span>
+                          <span className="capitalize bg-slate-100 px-2 py-1 rounded-md text-xs font-medium border border-slate-200 text-slate-700">{lead.property_status}</span>
                           <div className="text-xs text-slate-400 mt-1">{lead.carpet_area} sq.ft</div>
                         </td>
                         <td className="px-6 py-4 max-w-xs truncate" title={lead.message}>{lead.message || '-'}</td>
+                        <td className="px-6 py-4 text-center">
+                          <select 
+                            value={lead.status || 'New'}
+                            onChange={(e) => handleStatusChange(lead.id, 'leads', e.target.value)}
+                            className="text-xs border border-slate-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 bg-white cursor-pointer py-1.5 pl-2 pr-6 text-slate-700 font-medium hover:border-slate-400 transition-colors"
+                          >
+                            <option value="New">New</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Closed">Closed</option>
+                          </select>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -287,14 +459,14 @@ export default function AdminDashboard({ onLogout }) {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-slate-700 text-xs uppercase font-bold border-b border-slate-200">
+                <thead className="bg-slate-50 text-slate-700 text-xs uppercase font-bold border-b border-slate-200 select-none">
                   <tr>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4">Name</th>
+                    <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors" onClick={() => handleSort('created_at')}>Date <SortIcon columnKey="created_at" /></th>
+                    <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors" onClick={() => handleSort('name')}>Name <SortIcon columnKey="name" /></th>
                     <th className="px-6 py-4">Phone</th>
-                    <th className="px-6 py-4">Area</th>
-                    <th className="px-6 py-4">Budget</th>
-                    <th className="px-6 py-4">Transcript</th>
+                    <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors" onClick={() => handleSort('area')}>Area <SortIcon columnKey="area" /></th>
+                    <th className="px-6 py-4 cursor-pointer group hover:bg-slate-100 transition-colors" onClick={() => handleSort('budget')}>Budget <SortIcon columnKey="budget" /></th>
+                    <th className="px-6 py-4 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -302,19 +474,41 @@ export default function AdminDashboard({ onLogout }) {
                     <tr><td colSpan="6" className="text-center py-8 text-slate-400 italic">No chat leads found matching filters.</td></tr>
                   ) : (
                     filteredChatLeads.map(lead => (
-                      <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr key={lead.id} className="hover:bg-slate-50 transition-colors group">
                         <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-500 flex items-center gap-1"><Calendar className="h-3 w-3"/> {formatDate(lead.created_at)}</td>
-                        <td className="px-6 py-4 font-medium text-slate-900">{lead.name}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs ${getAvatarColor(lead.name)} shadow-sm`}>
+                              {getInitials(lead.name)}
+                            </div>
+                            <span className="font-medium text-slate-900">{lead.name}</span>
+                          </div>
+                        </td>
                         <td className="px-6 py-4">{lead.phone}</td>
                         <td className="px-6 py-4">{lead.area}</td>
-                        <td className="px-6 py-4"><span className="bg-green-50 text-green-700 px-2 py-1 rounded-md text-xs font-bold border border-green-100">{lead.budget}</span></td>
                         <td className="px-6 py-4">
-                           <button 
+                          <span className={`px-2 py-1 rounded-md text-xs font-bold border ${parseBudget(lead.budget) >= 1000000 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                            {lead.budget}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-3">
+                            <select 
+                              value={lead.status || 'New'}
+                              onChange={(e) => handleStatusChange(lead.id, 'chat_leads', e.target.value)}
+                              className="text-xs border border-slate-300 rounded-md shadow-sm focus:border-red-500 focus:ring-red-500 bg-white cursor-pointer py-1.5 pl-2 pr-6 text-slate-700 font-medium hover:border-slate-400 transition-colors"
+                            >
+                              <option value="New">New</option>
+                              <option value="Contacted">Contacted</option>
+                              <option value="Closed">Closed</option>
+                            </select>
+                            <button 
                               onClick={() => setSelectedTranscript(lead)}
-                              className="text-xs font-medium text-red-600 hover:text-red-800 transition-colors flex items-center gap-1 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full"
+                              className="text-xs font-medium text-red-600 hover:text-red-800 transition-colors flex items-center gap-1 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md border border-red-100 shadow-sm"
                             >
                               View Chat
-                           </button>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
