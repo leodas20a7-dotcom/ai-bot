@@ -157,7 +157,7 @@ export default function FormView() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mb-2 mt-2">
+              <div className="flex items-center gap-2 mb-6 mt-2">
                 <input 
                   type="checkbox" 
                   id="showMessageBox" 
