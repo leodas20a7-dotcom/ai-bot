@@ -116,7 +116,7 @@ export default function FormView() {
                     value={formData.fullName}
                     onChange={handleChange}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                    placeholder="John Doe"
+                    placeholder="Ramesh"
                   />
                 </div>
                 <div>
@@ -140,7 +140,7 @@ export default function FormView() {
                     value={formData.email}
                     onChange={handleChange}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                    placeholder="john@example.com"
+                    placeholder="ramesh@example.com"
                   />
                 </div>
                 <div>
