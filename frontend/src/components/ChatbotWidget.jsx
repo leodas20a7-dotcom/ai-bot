@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MessageCircle, X, Send, User, Bot } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '../lib/supabase';
@@ -42,6 +43,13 @@ export default function ChatbotWidget() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === '/ai-chat') {
+      setIsOpen(true);
+    }
+  }, [location.pathname]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

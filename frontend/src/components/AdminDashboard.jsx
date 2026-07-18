@@ -39,6 +39,7 @@ export default function AdminDashboard({ onLogout }) {
   const [chatLeads, setChatLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTranscript, setSelectedTranscript] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Sort state
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
@@ -255,20 +256,27 @@ export default function AdminDashboard({ onLogout }) {
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-slate-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="bg-slate-900 p-2 rounded-lg text-white">
-            <Database className="h-5 w-5" />
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="bg-red-600 p-2 rounded-lg text-white shadow-sm">
+            <Database className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div>
-            <h1 className="font-bold text-slate-800 text-lg leading-tight">Admin Dashboard</h1>
-            <p className="text-xs text-slate-500">Manage your leads</p>
+            <h1 className="font-bold text-slate-800 text-base sm:text-lg leading-tight">Admin Dashboard</h1>
+            <p className="text-[10px] sm:text-xs text-slate-500">Manage your leads</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <button 
+            onClick={() => setShowFilters(true)}
+            className="sm:hidden flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors bg-slate-100 hover:bg-slate-200 px-2 py-2 rounded-lg"
+            title="Filter Data"
+          >
+            <Filter className="h-4 w-4" />
+          </button>
           <button 
             onClick={exportToExcel}
-            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg"
+            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors bg-slate-100 hover:bg-slate-200 px-2 sm:px-3 py-2 rounded-lg"
             title="Export to Excel"
           >
             <Download className="h-4 w-4" />
@@ -276,7 +284,7 @@ export default function AdminDashboard({ onLogout }) {
           </button>
           <button 
             onClick={fetchData}
-            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg"
+            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors bg-slate-100 hover:bg-slate-200 px-2 sm:px-3 py-2 rounded-lg"
             title="Refresh Data"
           >
             <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -284,7 +292,7 @@ export default function AdminDashboard({ onLogout }) {
           </button>
           <button 
             onClick={onLogout}
-            className="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg border border-red-100"
+            className="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors bg-red-50 hover:bg-red-100 px-2 sm:px-3 py-2 rounded-lg border border-red-100"
           >
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">Logout</span>
@@ -293,10 +301,10 @@ export default function AdminDashboard({ onLogout }) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex flex-col gap-4 sm:gap-6 pb-24 sm:pb-8">
         
         {/* Tabs */}
-        <div className="flex gap-2 p-1 bg-slate-200/50 rounded-xl w-fit">
+        <div className="hidden sm:flex gap-2 p-1 bg-slate-200/50 rounded-xl w-fit">
           <button
             onClick={() => setActiveTab('forms')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
@@ -321,8 +329,8 @@ export default function AdminDashboard({ onLogout }) {
           </button>
         </div>
 
-        {/* Filter Bar */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-end">
+        {/* Desktop Filter Bar */}
+        <div className="hidden sm:flex bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex-wrap gap-4 items-end transition-all">
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-bold text-slate-700 mb-1">Search</label>
             <div className="relative">
@@ -387,7 +395,7 @@ export default function AdminDashboard({ onLogout }) {
 
           <button 
             onClick={() => { setSearchTerm(''); setLocationFilter(''); setStartDate(''); setEndDate(''); setStatusFilter(''); }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors h-[38px]"
+            className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors h-[38px]"
           >
             <Filter className="h-4 w-4" />
             Clear
@@ -395,13 +403,58 @@ export default function AdminDashboard({ onLogout }) {
         </div>
 
         {/* Data Container */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1">
+        <div className="bg-transparent sm:bg-white sm:rounded-2xl sm:shadow-sm sm:border sm:border-slate-200 sm:overflow-hidden flex-1 flex flex-col">
           {loading ? (
-            <div className="flex items-center justify-center h-64 text-slate-400">
+            <div className="flex items-center justify-center h-64 text-slate-400 bg-white rounded-2xl shadow-sm border border-slate-200">
               <RefreshCcw className="h-8 w-8 animate-spin" />
             </div>
           ) : activeTab === 'forms' ? (
-            <div className="overflow-x-auto">
+            <>
+              {/* Mobile Card View */}
+              <div className="sm:hidden flex flex-col gap-4">
+                {filteredLeads.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 italic bg-white rounded-xl border border-slate-200">No form leads found matching filters.</div>
+                ) : (
+                  filteredLeads.map(lead => (
+                    <div key={lead.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${getAvatarColor(lead.name)} shadow-sm`}>
+                            {getInitials(lead.name)}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900">{lead.name}</div>
+                            <div className="text-xs text-slate-500 flex items-center gap-1"><Calendar className="h-3 w-3"/> {formatDate(lead.created_at)}</div>
+                          </div>
+                        </div>
+                        <select 
+                          value={lead.status || 'New'}
+                          onChange={(e) => handleStatusChange(lead.id, 'leads', e.target.value)}
+                          className="text-xs border border-slate-300 rounded-md shadow-sm bg-white py-1 px-2 text-slate-700 font-medium focus:ring-red-500 focus:border-red-500"
+                        >
+                          <option value="New">New</option>
+                          <option value="Contacted">Contacted</option>
+                          <option value="Closed">Closed</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm mt-2">
+                        <div><span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-0.5">Contact</span><span className="text-slate-700">{lead.mobile}</span></div>
+                        <div><span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-0.5">Location</span><span className="text-slate-700">{lead.city || '-'}</span></div>
+                        <div><span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-0.5">Property</span><span className="capitalize text-slate-700">{lead.property_status}</span></div>
+                        <div><span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-0.5">Area</span><span className="text-slate-700">{lead.carpet_area ? `${lead.carpet_area} sq.ft` : '-'}</span></div>
+                      </div>
+                      {lead.message && (
+                        <div className="text-sm bg-slate-50 p-3 rounded-lg border border-slate-100 text-slate-600 italic mt-1">
+                          "{lead.message}"
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden sm:block overflow-x-auto flex-1">
               <table className="w-full text-left text-sm text-slate-600">
                 <thead className="bg-slate-50 text-slate-700 text-xs uppercase font-bold border-b border-slate-200 select-none">
                   <tr>
@@ -456,8 +509,59 @@ export default function AdminDashboard({ onLogout }) {
                 </tbody>
               </table>
             </div>
+            </>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              {/* Mobile Card View for Chats */}
+              <div className="sm:hidden flex flex-col gap-4">
+                {filteredChatLeads.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 italic bg-white rounded-xl border border-slate-200">No chat leads found matching filters.</div>
+                ) : (
+                  filteredChatLeads.map(lead => (
+                    <div key={lead.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${getAvatarColor(lead.name)} shadow-sm`}>
+                            {getInitials(lead.name)}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900">{lead.name}</div>
+                            <div className="text-xs text-slate-500 flex items-center gap-1"><Calendar className="h-3 w-3"/> {formatDate(lead.created_at)}</div>
+                          </div>
+                        </div>
+                        <select 
+                          value={lead.status || 'New'}
+                          onChange={(e) => handleStatusChange(lead.id, 'chat_leads', e.target.value)}
+                          className="text-xs border border-slate-300 rounded-md shadow-sm bg-white py-1 px-2 text-slate-700 font-medium focus:ring-red-500 focus:border-red-500"
+                        >
+                          <option value="New">New</option>
+                          <option value="Contacted">Contacted</option>
+                          <option value="Closed">Closed</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm mt-2">
+                        <div><span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-0.5">Phone</span><span className="text-slate-700">{lead.phone || '-'}</span></div>
+                        <div><span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-0.5">Area</span><span className="text-slate-700">{lead.area || '-'}</span></div>
+                        <div className="col-span-2"><span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-0.5">Budget</span>
+                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${parseBudget(lead.budget) >= 1000000 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                            {lead.budget || '-'}
+                          </span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setSelectedTranscript(lead)}
+                        className="mt-2 w-full text-sm font-bold text-red-600 hover:text-red-800 transition-colors flex justify-center items-center gap-2 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-lg border border-red-100 shadow-sm"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        View Chat Transcript
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden sm:block overflow-x-auto flex-1">
               <table className="w-full text-left text-sm text-slate-600">
                 <thead className="bg-slate-50 text-slate-700 text-xs uppercase font-bold border-b border-slate-200 select-none">
                   <tr>
@@ -516,9 +620,129 @@ export default function AdminDashboard({ onLogout }) {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
       </main>
+
+      {/* Bottom Navigation for Mobile */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center p-2 pb-safe z-40 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
+        <button
+          onClick={() => setActiveTab('forms')}
+          className={`flex flex-col items-center p-2 w-full transition-colors ${
+            activeTab === 'forms' ? 'text-red-600' : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <ClipboardList className={`h-6 w-6 mb-1 ${activeTab === 'forms' ? 'text-red-600' : ''}`} />
+          <span className="text-[10px] font-bold">Forms</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('chats')}
+          className={`flex flex-col items-center p-2 w-full transition-colors ${
+            activeTab === 'chats' ? 'text-red-600' : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <MessageSquare className={`h-6 w-6 mb-1 ${activeTab === 'chats' ? 'text-red-600' : ''}`} />
+          <span className="text-[10px] font-bold">Chats</span>
+        </button>
+      </div>
+
+      {/* Filter Modal */}
+      {showFilters && (
+        <div className="sm:hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><Filter className="h-5 w-5" /> Filters</h3>
+              <button 
+                onClick={() => setShowFilters(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Name, phone, email..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Location</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input 
+                    type="text" 
+                    placeholder="City, area..." 
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Start Date</label>
+                  <input 
+                    type="date" 
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-slate-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">End Date</label>
+                  <input 
+                    type="date" 
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-slate-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Status</label>
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="new">New</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex gap-3">
+              <button 
+                onClick={() => { setSearchTerm(''); setLocationFilter(''); setStartDate(''); setEndDate(''); setStatusFilter(''); }}
+                className="flex-1 py-2.5 text-sm font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 rounded-lg transition-colors"
+              >
+                Clear All
+              </button>
+              <button 
+                onClick={() => setShowFilters(false)}
+                className="flex-1 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Transcript Modal */}
       {selectedTranscript && (

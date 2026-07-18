@@ -26,6 +26,8 @@ function App() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<LandingView />} />
             <Route path="/enquire" element={<FormView />} />
+            <Route path="/form" element={<FormView />} />
+            <Route path="/ai-chat" element={<LandingView />} />
           </Route>
           <Route path="/admin" element={<AdminView />} />
         </Routes>

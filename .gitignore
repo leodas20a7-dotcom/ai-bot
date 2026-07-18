@@ -2,3 +2,7 @@ ai bot/
 ai bot.zip
 
 backup/
+.env
+backend/.env
+frontend/.env
+node_modules/
