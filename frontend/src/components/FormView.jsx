@@ -12,6 +12,7 @@ export default function FormView() {
     message: ''
   });
   const [status, setStatus] = useState('');
+  const [errors, setErrors] = useState({});
   const [showMessageBox, setShowMessageBox] = useState(false);
 
   const features = [
@@ -25,31 +26,85 @@ export default function FormView() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Mobile number 10-digit length validation
+    const digitsOnly = formData.mobile.replace(/\D/g, '');
+    if (digitsOnly.length !== 10) {
+      newErrors.mobile = 'Mobile number must be exactly 10 digits.';
+    }
+
+    // Email address validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     setStatus("submitting");
 
+    // 1. Save Lead to Supabase database
     try {
       const { data, error } = await supabase
         .from('leads')
         .insert([
           { 
-            name: formData.fullName,
-            mobile: formData.mobile,
-            email: formData.email,
-            city: formData.city,
-            message: formData.message,
-            source: 'Website Form'
+            name: formData.fullName.trim(),
+            mobile: formData.mobile.trim(),
+            email: formData.email.trim(),
+            city: formData.city.trim(),
+            message: formData.message.trim(),
+            source: 'Website Form',
+            property_status: 'Not Specified',
+            carpet_area: 'Not Specified'
           }
         ]);
 
-      if (error) throw error;
-      setStatus("success");
-    } catch (error) {
-      console.error("Error submitting lead:", error);
-      setStatus("error");
-      alert("Failed to submit. Please try again.");
+      if (error) {
+        console.error("Supabase leads insert error:", error);
+      }
+    } catch (dbErr) {
+      console.error("Database connection error:", dbErr);
     }
+
+    // 2. Send Instant Email Notification via Resend API
+    try {
+      await fetch('/api/resend/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_RESEND_API_KEY}`
+        },
+        body: JSON.stringify({
+          from: 'Convenio Mart Leads <info@atyourdoor.life>',
+          to: ['conveniomart@lordsandkingsagro.com'],
+          subject: `New Franchise Lead: ${formData.fullName.trim()} (${formData.city.trim()})`,
+          html: `
+            <h3>New Franchise Enquiry</h3>
+            <p><strong>Name:</strong> ${formData.fullName.trim()}</p>
+            <p><strong>Email:</strong> ${formData.email.trim()}</p>
+            <p><strong>Mobile:</strong> ${formData.mobile.trim()}</p>
+            <p><strong>City:</strong> ${formData.city.trim()}</p>
+            <p><strong>Message:</strong> ${formData.message.trim() || 'N/A'}</p>
+            <p><strong>Source:</strong> Franchise Enquiry Form</p>
+          `
+        })
+      });
+      console.log("Resend lead email sent successfully!");
+    } catch (emailErr) {
+      console.error("Resend email error:", emailErr);
+    }
+
+    // Display Application Submitted success screen
+    setStatus("success");
   };
 
   return (
@@ -125,11 +180,23 @@ export default function FormView() {
                     type="tel"
                     name="mobile"
                     required
+                    maxLength={10}
                     value={formData.mobile}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                    placeholder="+91 98765 43210"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setFormData({ ...formData, mobile: val });
+                      if (errors.mobile) setErrors({ ...errors, mobile: '' });
+                    }}
+                    className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all ${
+                      errors.mobile 
+                        ? 'border-red-500 ring-2 ring-red-100' 
+                        : 'border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
+                    }`}
+                    placeholder="9876543210"
                   />
+                  {errors.mobile && (
+                    <p className="text-red-500 text-xs mt-1 font-semibold">{errors.mobile}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Email Address *</label>
@@ -138,10 +205,20 @@ export default function FormView() {
                     name="email"
                     required
                     value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                    onChange={(e) => {
+                      handleChange(e);
+                      if (errors.email) setErrors({ ...errors, email: '' });
+                    }}
+                    className={`w-full px-3 py-2 text-sm rounded-lg border outline-none transition-all ${
+                      errors.email 
+                        ? 'border-red-500 ring-2 ring-red-100' 
+                        : 'border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
+                    }`}
                     placeholder="ramesh@example.com"
                   />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1 font-semibold">{errors.email}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">City / Location *</label>

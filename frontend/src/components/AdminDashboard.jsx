@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
-import { LogOut, RefreshCcw, Database, MessageSquare, ClipboardList, Calendar, X, Search, MapPin, Filter, ChevronUp, ChevronDown, Download, MoreVertical } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { LogOut, RefreshCcw, Database, MessageSquare, ClipboardList, Calendar, X, Search, MapPin, Filter, ChevronUp, ChevronDown, Download, MoreVertical, Settings } from 'lucide-react';
 
 // Helper for avatars
 const getInitials = (name) => {
@@ -40,6 +41,15 @@ export default function AdminDashboard({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [selectedTranscript, setSelectedTranscript] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [collectBudget, setCollectBudget] = useState(() => {
+    return localStorage.getItem('collect_budget_setting') === 'true';
+  });
+
+  const handleToggleBudgetSetting = async (val) => {
+    setCollectBudget(val);
+    localStorage.setItem('collect_budget_setting', String(val));
+  };
 
   // Sort state
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
@@ -72,7 +82,7 @@ export default function AdminDashboard({ onLogout }) {
       setChatLeads(chatData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('Failed to load data.');
+      alert(`Failed to load data: ${error.message || JSON.stringify(error)}`);
     } finally {
       setLoading(false);
     }
@@ -244,7 +254,15 @@ export default function AdminDashboard({ onLogout }) {
               <span className="font-bold text-green-600 bg-green-50 border border-green-100 px-2 py-0.5 rounded text-xs shadow-sm inline-block">CONVI</span>
             </div>
             <div className="text-slate-700 flex-1 leading-relaxed">
-              {msg.replace('ASSISTANT:', '').trim()}
+              <ReactMarkdown 
+                components={{
+                  p: ({node, ...props}) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                  ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-2 last:mb-0 space-y-1" {...props} />,
+                  strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />
+                }}
+              >
+                {msg.replace('ASSISTANT:', '').trim()}
+              </ReactMarkdown>
             </div>
           </div>
         );
@@ -289,6 +307,14 @@ export default function AdminDashboard({ onLogout }) {
           >
             <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
+          </button>
+          <button 
+            onClick={() => setShowSettingsModal(true)}
+            className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors bg-slate-100 hover:bg-slate-200 px-2 sm:px-3 py-2 rounded-lg"
+            title="Chatbot Settings"
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Settings</span>
           </button>
           <button 
             onClick={onLogout}
@@ -387,9 +413,9 @@ export default function AdminDashboard({ onLogout }) {
               className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white"
             >
               <option value="">All Statuses</option>
-              <option value="new">New</option>
-              <option value="contacted">Contacted</option>
-              <option value="closed">Closed</option>
+              <option value="New">New</option>
+              <option value="Contacted">Contacted</option>
+              <option value="Closed">Closed</option>
             </select>
           </div>
 
@@ -719,9 +745,9 @@ export default function AdminDashboard({ onLogout }) {
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white"
                 >
                   <option value="">All Statuses</option>
-                  <option value="new">New</option>
-                  <option value="contacted">Contacted</option>
-                  <option value="closed">Closed</option>
+                  <option value="New">New</option>
+                  <option value="Contacted">Contacted</option>
+                  <option value="Closed">Closed</option>
                 </select>
               </div>
             </div>
@@ -767,6 +793,61 @@ export default function AdminDashboard({ onLogout }) {
               <div className="bg-white rounded-xl border border-slate-200 p-5 font-sans text-sm text-slate-700 leading-relaxed shadow-sm">
                 {formatTranscript(selectedTranscript.transcript)}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+            <button 
+              onClick={() => setShowSettingsModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-red-50 text-red-600 rounded-xl">
+                <Settings className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Chatbot Settings</h2>
+                <p className="text-xs text-slate-500">Configure AI lead collection flow</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 py-4 border-t border-b border-slate-100 my-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <label className="font-semibold text-slate-800 text-sm block">Collect Budget Details</label>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {collectBudget 
+                      ? "Enabled: AI Bot will ask users for budget after name & location."
+                      : "Disabled (Default): AI Bot will only ask for Name, Location, and Phone Number separately."}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => handleToggleBudgetSetting(!collectBudget)}
+                  className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors shrink-0 ${
+                    collectBudget ? 'bg-red-600 justify-end' : 'bg-slate-300 justify-start'
+                  }`}
+                >
+                  <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform"></div>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition-all shadow-sm"
+              >
+                Save & Close
+              </button>
             </div>
           </div>
         </div>

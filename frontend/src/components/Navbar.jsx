@@ -1,10 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, ArrowLeft } from 'lucide-react';
 
 export default function Navbar() {
   const location = useLocation();
-  const isEnquirePage = location.pathname === '/enquire';
+  const isLandingPage = location.pathname === '/landing' || location.pathname === '/home';
 
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
@@ -18,9 +17,9 @@ export default function Navbar() {
             />
           </Link>
           <div>
-            {!isEnquirePage ? (
+            {isLandingPage ? (
               <Link
-                to="/enquire"
+                to="/"
                 className="inline-flex items-center justify-center px-4 py-2 sm:px-6 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 shadow-sm transition-all duration-200 whitespace-nowrap"
               >
                 <span className="sm:hidden">Enquire Now</span>
@@ -28,11 +27,10 @@ export default function Navbar() {
               </Link>
             ) : (
               <Link 
-                to="/" 
-                className="inline-flex items-center gap-2 text-slate-600 hover:text-red-600 font-bold transition-all bg-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md group"
+                to="/landing" 
+                className="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 text-slate-600 hover:text-red-600 font-bold transition-all bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md"
               >
-                <ArrowLeft className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform" />
-                Back
+                Home
               </Link>
             )}
           </div>

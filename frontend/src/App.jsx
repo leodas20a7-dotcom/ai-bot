@@ -24,9 +24,11 @@ function App() {
       <div className="min-h-screen flex flex-col font-sans">
         <Routes>
           <Route element={<PublicLayout />}>
-            <Route path="/" element={<LandingView />} />
+            <Route path="/" element={<FormView />} />
             <Route path="/enquire" element={<FormView />} />
             <Route path="/form" element={<FormView />} />
+            <Route path="/landing" element={<LandingView />} />
+            <Route path="/home" element={<LandingView />} />
             <Route path="/ai-chat" element={<LandingView />} />
           </Route>
           <Route path="/admin" element={<AdminView />} />

@@ -6,49 +6,87 @@ import { supabase } from '../lib/supabase';
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
-const SYSTEM_PROMPT = `You are Convi, the AI Franchise Consultant for Convenio Mart.
-Your goal is to politely answer questions and collect the user's Name, Phone Number, Area, and Budget.
-Keep your answers very short (1-2 sentences max).
+const getSystemPrompt = (collectBudget = false) => {
+  const commonRules = `
+STRICT ENQUIRY RULE:
+- If the user asks ANY question about the franchise (e.g., "why should I invest", "tell me details", "what is the process", "how much cost"):
+  DO NOT give long explanations or details!
+  Simply respond with 1 short polite sentence: "Our senior franchise manager will call you shortly to explain all the details." and then immediately ask for their contact detail.
+- Keep all responses extremely brief (1-2 short sentences max).
 
-KNOWLEDGE BASE:
-- Minimum Investment: 15 Lakhs to 20 Lakhs. (If their budget is 15 Lakhs or more, they qualify perfectly!)
-- Franchise Fee: 3 Lakhs to 5 Lakhs (100% refundable).
-- Estimated Monthly Revenue: 35,000 - 50,000 per month.
-- Profit Sharing: 70% to Franchise Owner, 30% to Corporate.
-- Loan Assistance: We provide up to 75% bank funding.
+LEAD COLLECTION STEPS (COLLECT ONE DETAIL AT A TIME SEPARATELY):
+1. FIRST TURN: Ask for their **Name**. (Do not ask for location or phone number yet).
+2. SECOND TURN: After they give Name, ask for their **City / Location**.
+${collectBudget ? '3. THIRD TURN: After Location, ask for their **Investment Budget**.\n4. FOURTH TURN: Ask for their **10-digit Mobile Phone Number**.' : '3. THIRD TURN: After Location, ask for their **10-digit Mobile Phone Number**.'}
 
-CONVERSATION RULES (STRICT):
-1. 15 Lakhs is a GREAT budget. If they say 15 Lakhs, congratulate them and say they qualify.
-2. If their budget is LESS than 15 Lakhs, politely mention that we provide up to 75% bank loan assistance.
-3. If they repeatedly insist they only have a low budget even after hearing about the loan, gracefully accept it. Say "Thank you for your interest, our team will reach out to discuss options." and immediately ask for their Phone Number, or suggest they fill out the 'Enquire your Franchise' form.
-4. First, politely collect their Name, Area, and Budget.
-5. ONLY AFTER you have successfully collected their Name, Area, AND Budget, you must ask for their Phone Number as the final step. Do NOT ask for their Phone Number upfront.
-6. PHONE NUMBER VALIDATION: When the user provides their phone number, you MUST verify that it contains exactly 10 digits. If it does not contain exactly 10 digits, politely tell them it is invalid and ask them to enter a valid 10-digit phone number. Do not accept the number or summarize the conversation until a valid 10-digit number is provided.
+STRICT CONVERSATION RULES:
+- Ask ONE detail per turn. Never combine multiple questions in one turn.
+- PHONE NUMBER VALIDATION: Verify phone number has exactly 10 digits. If not 10 digits, politely ask them to re-enter a valid 10-digit number.
+`;
+
+  if (!collectBudget) {
+    return `You are Convi, the AI Franchise Consultant for Convenio Mart.
+${commonRules}
 
 ***END OF CONVERSATION TRIGGER***
-As soon as you have collected ALL FOUR details (Name, Phone Number, Area, Budget), you MUST summarize them at the very bottom of your message like this:
+As soon as you have collected Name, Location, and valid 10-digit Phone Number:
+Output the summary with EACH DETAIL ON A SEPARATE LINE using bullet points:
 
-- Name: [Their Name]
-- Phone: [Their Phone Number]
-- Area: [Their Area]
-- Budget: [Their Budget]
+- **Name:** [Their Name]
+- **Phone:** [Their Phone Number]
+- **Area:** [Their Location]
 
-After the summary, you must say "Great! Our senior manager will call you shortly to discuss further." and stop talking.`;
+After the summary on a new line, say:
+"Great! Our team will reach out to you shortly to discuss further." and stop asking questions.`;
+  }
+
+  return `You are Convi, the AI Franchise Consultant for Convenio Mart.
+${commonRules}
+
+***END OF CONVERSATION TRIGGER***
+As soon as you have collected Name, Location, Budget, and valid 10-digit Phone Number:
+Output the summary with EACH DETAIL ON A SEPARATE LINE using bullet points:
+
+- **Name:** [Their Name]
+- **Phone:** [Their Phone Number]
+- **Area:** [Their Location]
+- **Budget:** [Their Budget]
+
+After the summary on a new line, say:
+"Great! Our team will reach out to you shortly to discuss further." and stop asking questions.`;
+};
 
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [collectBudget, setCollectBudget] = useState(() => {
+    return localStorage.getItem('collect_budget_setting') === 'true';
+  });
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: "Hello! 👋 I'm Convi, the AI Franchise Consultant. Are you looking to start a supermarket franchise?" }
+    { role: 'assistant', content: "Hello! 👋 I'm Convi, the AI Franchise Consultant. May I know your name?" }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const leadSavedRef = useRef(false);
   const messagesEndRef = useRef(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const fetchSetting = () => {
+      const stored = localStorage.getItem('collect_budget_setting');
+      if (stored !== null) {
+        setCollectBudget(stored === 'true');
+      }
+    };
+    fetchSetting();
+  }, []);
 
   useEffect(() => {
     if (location.pathname === '/ai-chat') {
       setIsOpen(true);
     }
+    const handleOpenChat = () => setIsOpen(true);
+    window.addEventListener('open-ai-chat', handleOpenChat);
+    return () => window.removeEventListener('open-ai-chat', handleOpenChat);
   }, [location.pathname]);
 
   const scrollToBottom = () => {
@@ -60,29 +98,44 @@ export default function ChatbotWidget() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
-    const userMsg = { role: 'user', content: input };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    const userMessage = input.trim();
     setInput('');
+    const newMessages = [...messages, { role: 'user', content: userMessage }];
+    setMessages(newMessages);
     setIsLoading(true);
 
+    // Precise JS digit validation to prevent LLM token counting hallucination
+    const digitsOnly = userMessage.replace(/\D/g, '');
+    let systemHint = '';
+    if (digitsOnly.length === 10) {
+      systemHint = `[SYSTEM NOTE: User provided phone number "${digitsOnly}" which is VALID (exactly 10 digits). Accept it as valid immediately and output the final summary.]`;
+    } else if (digitsOnly.length > 0 && digitsOnly.length !== 10 && !(digitsOnly.length === 12 && digitsOnly.startsWith('91'))) {
+      systemHint = `[SYSTEM NOTE: User provided number "${userMessage}" which has ${digitsOnly.length} digits. It is NOT 10 digits. Ask them politely to re-enter a valid 10-digit mobile number.]`;
+    }
+
+    const payloadMessages = [
+      { role: 'system', content: getSystemPrompt(collectBudget) },
+      ...newMessages.map(m => ({ role: m.role, content: m.content }))
+    ];
+
+    if (systemHint) {
+      payloadMessages.push({ role: 'system', content: systemHint });
+    }
+
     try {
-      const response = await fetch('/api/groq/openai/v1/chat/completions', {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${GROQ_API_KEY}`
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            ...newMessages
-          ],
-          temperature: 0.1,
-          top_p: 0.1,
+          model: 'llama-3.3-70b-versatile',
+          messages: payloadMessages,
+          temperature: 0.3,
+          max_tokens: 300
         })
       });
 
@@ -93,29 +146,66 @@ export default function ChatbotWidget() {
       } catch (e) {
         throw new Error(`API returned non-JSON response. Status: ${response.status}. Response: ${rawText.substring(0, 100)}...`);
       }
-      
+
       if (data.choices && data.choices[0]) {
         let aiResponse = data.choices[0].message.content;
-        
-        // Extract Lead Data via natural language summary (ignoring markdown bold/italics)
-        const nameMatch = aiResponse.match(/Name[^:\n]*:\s*([^\n]+)/i);
-        const phoneMatch = aiResponse.match(/Phone[^:\n]*:\s*([^\n]+)/i);
-        const areaMatch = aiResponse.match(/Area[^:\n]*:\s*([^\n]+)/i);
-        const budgetMatch = aiResponse.match(/Budget[^:\n]*:\s*([^\n]+)/i);
-        
-        // We look for all four to exist in the response
-        if (nameMatch && phoneMatch && areaMatch && budgetMatch) {
+
+        // Line-by-line extraction of lead details
+        const cleanLines = aiResponse.split('\n').map(l => l.replace(/[*_#\-]/g, '').trim());
+
+        let extractedName = null;
+        let extractedPhone = null;
+        let extractedArea = null;
+        let extractedBudget = null;
+
+        cleanLines.forEach(line => {
+          if (!extractedName && /^(?:Name|Full Name)\s*:\s*(.+)$/i.test(line)) {
+            extractedName = line.match(/^(?:Name|Full Name)\s*:\s*(.+)$/i)[1].trim();
+          }
+          if (!extractedPhone && /^(?:Phone|Mobile|Contact|Number)\s*:\s*(.+)$/i.test(line)) {
+            extractedPhone = line.match(/^(?:Phone|Mobile|Contact|Number)\s*:\s*(.+)$/i)[1].trim();
+          }
+          if (!extractedArea && /^(?:Area|Location|City|Place)\s*:\s*(.+)$/i.test(line)) {
+            extractedArea = line.match(/^(?:Area|Location|City|Place)\s*:\s*(.+)$/i)[1].trim();
+          }
+          if (!extractedBudget && /^(?:Budget|Investment)\s*:\s*(.+)$/i.test(line)) {
+            extractedBudget = line.match(/^(?:Budget|Investment)\s*:\s*(.+)$/i)[1].trim();
+          }
+        });
+
+        // Fallback: Scan user messages for a 10-digit phone number if missing from summary
+        if (!extractedPhone) {
+          for (let i = newMessages.length - 1; i >= 0; i--) {
+            const msg = newMessages[i];
+            if (msg.role === 'user') {
+              const digits = msg.content.replace(/\D/g, '');
+              if (digits.length === 10) {
+                extractedPhone = digits;
+                break;
+              }
+            }
+          }
+        }
+
+        // If phone is found (or Name + Phone present) and lead hasn't been saved for this session yet
+        if (extractedPhone && !leadSavedRef.current) {
+          leadSavedRef.current = true;
           try {
+            // Find name fallback from early user messages if not explicitly captured
+            const userMessages = newMessages.filter(m => m.role === 'user');
+            const fallbackName = userMessages.length > 0 ? userMessages[0].content.trim() : 'Guest';
+
             const leadData = {
-              name: nameMatch[1].replace(/[*_]/g, '').trim(),
-              phone: phoneMatch[1].replace(/[*_]/g, '').trim(),
-              area: areaMatch[1].replace(/[*_]/g, '').trim(),
-              budget: budgetMatch[1].replace(/[*_]/g, '').trim()
+              name: extractedName || fallbackName,
+              phone: extractedPhone,
+              area: extractedArea || 'N/A',
+              budget: extractedBudget || 'Not Provided'
             };
-            
-            // Format chat transcript
+
             const transcript = newMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
-            
+
+            console.log("Saving lead to Supabase chat_leads:", leadData);
+
             // Save to Supabase
             const { error: dbError } = await supabase.from('chat_leads').insert([{
               name: leadData.name,
@@ -128,10 +218,40 @@ export default function ChatbotWidget() {
             if (dbError) {
               console.error("Supabase insert error:", dbError);
             } else {
-              console.log("Successfully saved lead to Supabase!");
+              console.log("Successfully saved lead to Supabase chat_leads!");
+            }
+
+            // Send Instant Email Notification via Resend API
+            try {
+              await fetch('/api/resend/emails', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${import.meta.env.VITE_RESEND_API_KEY}`
+                },
+                body: JSON.stringify({
+                  from: 'Convenio Mart AI Bot <info@atyourdoor.life>',
+                  to: ['conveniomart@lordsandkingsagro.com'],
+                  subject: `New AI Chatbot Lead: ${leadData.name} (${leadData.area})`,
+                  html: `
+                    <h3>New Chatbot Lead</h3>
+                    <p><strong>Name:</strong> ${leadData.name}</p>
+                    <p><strong>Phone:</strong> ${leadData.phone}</p>
+                    <p><strong>Area:</strong> ${leadData.area}</p>
+                    <p><strong>Budget:</strong> ${leadData.budget}</p>
+                    <p><strong>Source:</strong> AI Chatbot</p>
+                    <hr/>
+                    <h4>Chat Transcript:</h4>
+                    <pre style="white-space: pre-wrap; font-family: sans-serif;">${transcript + `\n\nASSISTANT: ${aiResponse.trim()}`}</pre>
+                  `
+                })
+              });
+              console.log("Resend chatbot email notification sent successfully!");
+            } catch (emailErr) {
+              console.error("Resend email notification error:", emailErr);
             }
           } catch (e) {
-            console.error("Failed to parse conversational lead details:", e);
+            console.error("Failed to save conversational lead details:", e);
           }
         }
 
@@ -148,16 +268,45 @@ export default function ChatbotWidget() {
     }
   };
 
+  const isLandingPage = location.pathname === '/landing' || location.pathname === '/home';
+
   return (
     <>
-      {/* Floating Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 p-4 rounded-full bg-red-600 text-white shadow-xl hover:bg-red-700 transition-all transform hover:scale-105 z-50 ${isOpen ? 'hidden' : 'flex'} items-center gap-2`}
-      >
-        <MessageCircle className="h-6 w-6" />
-        <span className="font-bold hidden sm:inline">Doubts?</span>
-      </button>
+      {/* Top-Right Floating Action Buttons (Enquiry Page only) */}
+      {!isOpen && !isLandingPage && (
+        <div className="fixed top-24 right-4 sm:right-6 z-40 flex flex-col gap-3 items-center">
+          {/* Chat Icon Button */}
+          <button
+            onClick={() => setIsOpen(true)}
+            title="AI Chat"
+            className="p-3.5 bg-red-600 text-white rounded-full shadow-xl hover:bg-red-700 transition-all transform hover:scale-110 flex items-center justify-center"
+          >
+            <Bot className="h-6 w-6" />
+          </button>
+
+          {/* WhatsApp Icon Button */}
+          <a
+            href="https://wa.me/918072557159?text=Hi%20Convenio%20Mart,%20I%20am%20interested%20in%20franchise%20details."
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Chat on WhatsApp"
+            className="p-3.5 bg-[#25D366] text-white rounded-full shadow-xl hover:bg-[#128C7E] transition-all transform hover:scale-110 flex items-center justify-center"
+          >
+            <MessageCircle className="h-6 w-6" />
+          </a>
+        </div>
+      )}
+
+      {/* Bottom-Right Doubts Floating Button (Landing Page Desktop view) */}
+      {!isOpen && isLandingPage && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 p-4 rounded-full bg-red-600 text-white shadow-xl hover:bg-red-700 transition-all transform hover:scale-105 z-50 hidden md:flex items-center gap-2"
+        >
+          <MessageCircle className="h-6 w-6" />
+          <span className="font-bold">Doubts?</span>
+        </button>
+      )}
 
       {/* Chat Window */}
       {isOpen && (
@@ -183,11 +332,11 @@ export default function ChatbotWidget() {
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`space-y-2 max-w-[80%] rounded-2xl p-3 text-sm ${msg.role === 'user' ? 'bg-red-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none shadow-sm'}`}>
-                  <ReactMarkdown 
+                  <ReactMarkdown
                     components={{
-                      p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-                      ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-2 last:mb-0 space-y-1" {...props} />,
-                      strong: ({node, ...props}) => <strong className="font-bold" {...props} />
+                      p: ({ node, ...props }) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                      ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2 last:mb-0 space-y-1" {...props} />,
+                      strong: ({ node, ...props }) => <strong className="font-bold" {...props} />
                     }}
                   >
                     {msg.content}
@@ -209,7 +358,7 @@ export default function ChatbotWidget() {
 
           {/* Input */}
           <div className="p-4 bg-white border-t border-slate-100">
-            <form 
+            <form
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}
               className="flex gap-2"
             >
@@ -220,7 +369,7 @@ export default function ChatbotWidget() {
                 placeholder="Ask me anything..."
                 className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
               />
-              <button 
+              <button
                 type="submit"
                 disabled={isLoading || !input.trim()}
                 className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 transition-colors"

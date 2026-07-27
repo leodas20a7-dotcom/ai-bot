@@ -1,6 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { CheckCircle, TrendingUp, ShieldCheck, Zap, ShoppingCart, ClipboardList, MessageCircle } from 'lucide-react';
+import { CheckCircle, TrendingUp, ShieldCheck, Zap, ShoppingCart, ClipboardList, MessageCircle, Bot, ExternalLink } from 'lucide-react';
 
 export default function LandingView() {
   const features = [
@@ -49,14 +48,38 @@ export default function LandingView() {
             <p className="text-sm lg:text-base text-slate-600">Premium Mini-Supermarket Franchise Opportunity</p>
           </div>
 
-          <div className="relative z-10 w-full flex justify-center md:justify-start">
-            <Link
-              to="/enquire"
-              className="px-6 py-3 w-56 border-2 border-slate-800 text-slate-800 font-bold text-center rounded-2xl hover:bg-slate-800 hover:text-white transition-colors duration-300"
+          <div className="relative z-10 w-full flex flex-col gap-3 items-center md:items-start">
+            {/* Mobile Action Buttons (WhatsApp & Chat) */}
+            <div className="w-full max-w-xs flex gap-3 items-center justify-center md:hidden pb-1">
+              <a
+                href="https://wa.me/918072557159?text=Hi%20Convenio%20Mart,%20I%20am%20interested%20in%20franchise%20details."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-3 px-4 flex items-center justify-center gap-2 text-sm font-bold rounded-2xl text-white bg-[#25D366] hover:bg-[#128C7E] shadow-md transition-all"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </a>
+              <button
+                onClick={() => window.dispatchEvent(new Event('open-ai-chat'))}
+                className="flex-1 py-3 px-4 flex items-center justify-center gap-2 text-sm font-bold rounded-2xl text-white bg-red-600 hover:bg-red-700 shadow-md transition-all"
+              >
+                <Bot className="h-4 w-4" />
+                Chat
+              </button>
+            </div>
+
+            <a
+              href="https://conveniomart.lordsandkingsagro.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-1.5 text-xs sm:text-sm md:text-base border-0 border-slate-800 text-slate-800 font-bold text-center rounded-xl md:rounded-2xl hover:bg-slate-800 hover:text-white transition-all duration-300 flex items-center justify-center gap-1.5 md:px-6 md:py-3 md:w-56 max-w-xs md:border-2"
             >
-              Know more
-            </Link>
-          </div>        </div>
+              <span>Know more</span>
+              <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            </a>
+          </div>
+        </div>
 
         {/* Right Side */}
         <div className="w-full md:w-1/2 p-6 lg:p-12 flex flex-col justify-center items-center gap-4 lg:gap-6 bg-white overflow-hidden">
@@ -78,7 +101,7 @@ export default function LandingView() {
             href="https://wa.me/918072557159?text=Hi%20Convenio%20Mart,%20I%20am%20interested%20in%20franchise%20details."
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full max-w-sm flex items-center justify-center gap-3 px-8 py-5 text-center text-lg font-bold rounded-2xl text-white bg-[#25D366] hover:bg-[#128C7E] shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+            className="hidden md:flex w-full max-w-sm items-center justify-center gap-3 px-8 py-5 text-center text-lg font-bold rounded-2xl text-white bg-[#25D366] hover:bg-[#128C7E] shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
           >
             <MessageCircle className="h-6 w-6" />
             Chat on WhatsApp
