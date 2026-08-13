@@ -122,26 +122,26 @@ export default function LeadsPage({ highlightedLeadId }) {
   }, []);
 
   return (
-    <div className="flex flex-col gap-6 h-[calc(100vh-8rem)]">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-6 flex-1 min-h-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">Leads Pipeline</h1>
-          <p className="text-sm text-slate-500 font-medium">Manage and track your incoming leads.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-800">Leads Pipeline</h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Manage and track your incoming leads.</p>
         </div>
         
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm"
+            className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm w-full sm:w-auto"
           >
             <Plus className="h-4 w-4" /> Add Lead
           </button>
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-100 flex items-center gap-4 bg-slate-50">
-          <div className="relative flex-1 max-w-md">
+      <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-0">
+        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-slate-50">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input 
               type="text" 
@@ -151,10 +151,10 @@ export default function LeadsPage({ highlightedLeadId }) {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="relative">
+          <div className="relative shrink-0">
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm font-bold transition-colors ${showFilters || stageFilter !== 'ALL' ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+              className={`flex items-center justify-center gap-2 px-3 py-2 border rounded-lg text-sm font-bold transition-colors w-full sm:w-auto ${showFilters || stageFilter !== 'ALL' ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
             >
               <Filter className="h-4 w-4" /> 
               Filters {stageFilter !== 'ALL' && <span className="bg-red-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full ml-1">1</span>}

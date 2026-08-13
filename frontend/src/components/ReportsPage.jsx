@@ -100,15 +100,15 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto w-full">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">Franchise Reports</h1>
-          <p className="text-sm text-slate-500 font-medium">Analyze your lead generation and sales performance.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-800">Franchise Reports</h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Analyze your lead generation and sales performance.</p>
         </div>
         
         <button 
           onClick={handleExportCSV}
-          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg"
+          className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg w-full sm:w-auto shrink-0"
         >
           <Download className="h-4 w-4" /> Export Leads (CSV)
         </button>

@@ -50,12 +50,12 @@ export default function TopNav({ onLogout, onSettings, onNotificationClick }) {
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 h-16 flex items-center justify-between shadow-sm">
-      <div className="flex items-center gap-2">
-        <h2 className="text-xl font-bold text-slate-800">{getGreeting()}, Admin <span className="text-xl">👋</span></h2>
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-3 sm:px-6 h-16 flex items-center justify-between shadow-sm">
+      <div className="flex items-center gap-2 min-w-0">
+        <h2 className="text-sm sm:text-xl font-bold text-slate-800 whitespace-nowrap truncate">{getGreeting()}, Admin <span className="text-sm sm:text-xl">👋</span></h2>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         <div className="relative">
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
@@ -69,8 +69,8 @@ export default function TopNav({ onLogout, onSettings, onNotificationClick }) {
           
           {showNotifications && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)}></div>
-              <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="fixed inset-0 z-[65]" onClick={() => setShowNotifications(false)}></div>
+              <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:mt-2 w-auto sm:w-80 bg-white border border-slate-200 rounded-2xl sm:rounded-xl shadow-2xl z-[70] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                   <h3 className="font-bold text-slate-800 text-sm">Notifications</h3>
                   <div className="flex gap-1">
