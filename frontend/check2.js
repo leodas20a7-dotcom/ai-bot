@@ -1,0 +1,21 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  'https://edpzalqhhsjlkoqnuyzc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkcHphbHFoaHNqbGtvcW51eXpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwOTI1MzIsImV4cCI6MjA5OTY2ODUzMn0.3jp56LJI3t8sQYYqn324Ll1drf25hKyLcUegNlD4_6Q'
+);
+
+async function run() {
+  const payload = {
+    type: 'WHATSAPP',
+    name: 'Send Franchise Brochure',
+    body: 'Test body',
+    is_system: true,
+    status_trigger: 'INTERESTED'
+  };
+  const { data, error } = await supabase.from('templates').upsert([payload]).select().single();
+  console.log('Result:', data);
+  console.log('Error:', error);
+}
+
+run();

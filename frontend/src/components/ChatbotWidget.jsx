@@ -2,9 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessageCircle, X, Send, User, Bot } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { createEnquiry } from '../lib/api';
 import { supabase } from '../lib/supabase';
-
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
 const getSystemPrompt = (collectBudget = false) => {
   const commonRules = `
@@ -125,10 +124,9 @@ export default function ChatbotWidget() {
     }
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('/api/groq/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -204,21 +202,29 @@ export default function ChatbotWidget() {
 
             const transcript = newMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
 
-            console.log("Saving lead to Supabase chat_leads:", leadData);
+            console.log("Saving lead to Supabase enquiries:", leadData);
 
-            // Save to Supabase
-            const { error: dbError } = await supabase.from('chat_leads').insert([{
-              name: leadData.name,
-              phone: leadData.phone,
-              area: leadData.area,
-              budget: leadData.budget,
-              transcript: transcript + `\n\nASSISTANT: ${aiResponse.trim()}`
-            }]);
+            // Save to Supabase using createEnquiry
+            try {
+              const newEnquiry = await createEnquiry({
+                name: leadData.name,
+                phone: leadData.phone,
+                location: leadData.area,
+                investment_capacity: leadData.budget,
+                status: 'NEW',
+                source: 'CHAT'
+              });
 
-            if (dbError) {
+              // Also add the transcript as a timeline event
+              await supabase.from('enquiry_timeline').insert([{
+                enquiry_id: newEnquiry.id,
+                action_type: 'CHAT_TRANSCRIPT',
+                description: 'Initial chat transcript saved.\n\n' + transcript + `\n\nASSISTANT: ${aiResponse.trim()}`
+              }]);
+              
+              console.log("Successfully saved lead to Supabase enquiries!");
+            } catch (dbError) {
               console.error("Supabase insert error:", dbError);
-            } else {
-              console.log("Successfully saved lead to Supabase chat_leads!");
             }
 
             // Send Instant Email Notification via Resend API
@@ -226,8 +232,7 @@ export default function ChatbotWidget() {
               await fetch('/api/resend/emails', {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${import.meta.env.VITE_RESEND_API_KEY}`
+                  'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                   from: 'Convenio Mart AI Bot <info@atyourdoor.life>',

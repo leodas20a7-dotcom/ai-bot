@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Send, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, Send, ArrowLeft, Bot } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { createEnquiry } from '../lib/api';
 
 export default function FormView() {
   const [formData, setFormData] = useState({
@@ -51,26 +51,17 @@ export default function FormView() {
 
     setStatus("submitting");
 
-    // 1. Save Lead to Supabase database
+    // 1. Save Lead to Supabase enquiries table
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .insert([
-          { 
-            name: formData.fullName.trim(),
-            mobile: formData.mobile.trim(),
-            email: formData.email.trim(),
-            city: formData.city.trim(),
-            message: formData.message.trim(),
-            source: 'Website Form',
-            property_status: 'Not Specified',
-            carpet_area: 'Not Specified'
-          }
-        ]);
-
-      if (error) {
-        console.error("Supabase leads insert error:", error);
-      }
+      await createEnquiry({
+        name: formData.fullName.trim(),
+        phone: formData.mobile.trim(),
+        email: formData.email.trim(),
+        location: formData.city.trim(),
+        notes: formData.message.trim(),
+        status: 'NEW',
+        source: 'FORM'
+      });
     } catch (dbErr) {
       console.error("Database connection error:", dbErr);
     }
@@ -80,8 +71,7 @@ export default function FormView() {
       await fetch('/api/resend/emails', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_RESEND_API_KEY}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           from: 'Convenio Mart Leads <info@atyourdoor.life>',
@@ -146,17 +136,22 @@ export default function FormView() {
             </div>
           )}
           {status === 'success' ? (
-            <div className="text-center p-6 bg-green-50 rounded-2xl border border-green-100">
-              <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
-              <h2 className="text-2xl font-bold text-green-800 mb-2">Application Submitted!</h2>
-              <p className="text-green-600 mb-4 text-sm">
-                Thank you for your interest in Convenio Mart. Our franchise expert will contact you shortly.
+            <div className="text-center p-8 lg:p-12 bg-white rounded-3xl border border-slate-100 shadow-xl flex flex-col items-center animate-in zoom-in-95 duration-500">
+              <div className="h-20 w-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
+                <CheckCircle2 className="h-10 w-10 text-green-500" />
+              </div>
+              <h2 className="text-3xl font-extrabold text-slate-800 mb-3 tracking-tight">Application Received!</h2>
+              <p className="text-slate-500 mb-8 max-w-md mx-auto leading-relaxed">
+                Thank you for your interest in Convenio Mart. Our franchise experts are reviewing your details and will contact you shortly.
               </p>
+              
+
+
               <button 
                 onClick={() => setStatus('')}
-                className="text-green-700 font-bold hover:text-green-800 underline text-sm"
+                className="text-slate-400 font-medium hover:text-slate-600 transition-colors text-sm"
               >
-                Submit another application
+                Submit another enquiry
               </button>
             </div>
           ) : (
