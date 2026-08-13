@@ -179,19 +179,36 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
         };
 
         const plainBody = htmlToPlainText(previewBody);
-        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(data.email)}&su=${encodeURIComponent(previewTemplate.name)}&body=${encodeURIComponent(plainBody)}`;
-        window.open(gmailUrl, '_blank');
+
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          // Direct native mobile app launch for Email
+          const mailtoUrl = `mailto:${encodeURIComponent(data.email)}?subject=${encodeURIComponent(previewTemplate.name)}&body=${encodeURIComponent(plainBody)}`;
+          window.location.href = mailtoUrl;
+        } else {
+          // Desktop Web Gmail Compose
+          const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(data.email)}&su=${encodeURIComponent(previewTemplate.name)}&body=${encodeURIComponent(plainBody)}`;
+          window.open(gmailUrl, '_blank');
+        }
 
       } else {
         if (!data.phone) throw new Error("No phone number on file for this lead.");
         let phone = data.phone.replace(/\D/g, '');
         if (phone.length === 10) phone = '91' + phone; // Default to India if 10 digits
 
-        // Sanitize: strip all emojis and corrupted chars before building wa.me URL
+        // Sanitize: strip all emojis and corrupted chars before building WhatsApp URL
         const cleanMessage = sanitizeTemplateText(previewBody);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(cleanMessage)}`;
-        window.open(waUrl, '_blank');
+        if (isMobile) {
+          // Direct native mobile WhatsApp app launch
+          const mobileWaUrl = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(cleanMessage)}`;
+          window.location.href = mobileWaUrl;
+        } else {
+          // Desktop WhatsApp Web link
+          const waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(cleanMessage)}`;
+          window.open(waUrl, '_blank');
+        }
       }
 
       // Log to timeline

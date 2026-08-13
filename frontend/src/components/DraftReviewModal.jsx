@@ -91,8 +91,12 @@ export default function DraftReviewModal({ enquiry, newStatus, onClose, onSent }
             .replace(/  +/g, ' ')
             .trim();
           const encodedText = encodeURIComponent(cleanContent);
-          const waUrl = `https://wa.me/${phoneWithCountry}?text=${encodedText}`;
-          window.open(waUrl, '_blank');
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          if (isMobile) {
+            window.location.href = `whatsapp://send?phone=${phoneWithCountry}&text=${encodedText}`;
+          } else {
+            window.open(`https://web.whatsapp.com/send?phone=${phoneWithCountry}&text=${encodedText}`, '_blank');
+          }
         }
         
         await saveCommunicationDraft({
