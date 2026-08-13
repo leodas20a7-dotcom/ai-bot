@@ -4,3 +4,10 @@ body {
   background-color: #f9fafb;
   color: #111827;
 }
+
+@media (min-width: 1024px) {
+  .desktop-zoom {
+    zoom: 0.8;
+  }
+}
+

@@ -30,7 +30,7 @@ export default function AdminDashboard({ onLogout }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans selection:bg-blue-100 selection:text-blue-900 pb-16 lg:pb-0" style={{ zoom: 0.8 }}>
+    <div className="min-h-screen bg-slate-50 flex font-sans selection:bg-blue-100 selection:text-blue-900 pb-16 lg:pb-0 desktop-zoom">
       
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
