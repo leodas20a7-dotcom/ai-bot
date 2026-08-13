@@ -321,21 +321,72 @@ export default function FranchiseDashboard() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col min-h-[400px]">
         
-        {/* Filter Bar */}
-        <div className="p-4 border-b border-slate-200 bg-white flex flex-col gap-3 shrink-0">
-          {/* Search — full width always */}
+        {/* Filter Bar — WhatsApp-Style Clean Layout */}
+        <div className="p-3 sm:p-4 border-b border-slate-200 bg-white flex flex-col gap-2.5 shrink-0">
+          {/* Rounded Pill Search */}
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name, phone, email..."
-              className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 w-full transition-colors font-medium text-slate-700"
+              placeholder="Search leads by name, phone, city..."
+              className="pl-10 pr-4 py-2.5 bg-slate-100/80 border-0 rounded-full text-sm focus:outline-none focus:bg-slate-100 focus:ring-2 focus:ring-blue-500 w-full transition-all font-medium text-slate-800 placeholder:text-slate-400"
             />
           </div>
-          {/* Filters — 2-col on mobile, row on lg */}
-          <div className="grid grid-cols-2 lg:flex lg:flex-wrap items-center gap-2 lg:gap-3">
+
+          {/* Mobile Filter Chips (Horizontal Scrollable like WhatsApp: All, Active, Closed) */}
+          <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar pt-1">
+            {[
+              { id: 'ALL', label: 'All Leads' },
+              { id: 'ACTIVE', label: 'Active' },
+              { id: 'CLOSED', label: 'Closed/Won' },
+            ].map(chip => (
+              <button
+                key={chip.id}
+                onClick={() => setStatusFilter(chip.id)}
+                className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  statusFilter === chip.id
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {chip.label}
+              </button>
+            ))}
+
+            <div className="h-4 w-px bg-slate-200 shrink-0 mx-1"></div>
+
+            {[
+              { id: 'ALL', label: 'All Sources' },
+              { id: 'CHAT', label: 'Chat' },
+              { id: 'FORM', label: 'Form' },
+            ].map(srcChip => (
+              <button
+                key={srcChip.id}
+                onClick={() => setSourceFilter(srcChip.id)}
+                className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  sourceFilter === srcChip.id
+                    ? 'bg-slate-800 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {srcChip.label}
+              </button>
+            ))}
+
+            {(statusFilter !== 'ALL' || sourceFilter !== 'ALL' || dateFilter !== 'ALL' || searchQuery !== '') && (
+              <button
+                onClick={() => { setStatusFilter('ALL'); setSourceFilter('ALL'); setDateFilter('ALL'); setSearchQuery(''); }}
+                className="whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-all shrink-0 flex items-center gap-1"
+              >
+                <RotateCcw className="h-3 w-3" /> Reset
+              </button>
+            )}
+          </div>
+
+          {/* Desktop Filters (Hidden on Mobile) */}
+          <div className="hidden md:flex flex-wrap items-center gap-3">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -366,7 +417,7 @@ export default function FranchiseDashboard() {
             </select>
             <button
               onClick={() => { setStatusFilter('ALL'); setSourceFilter('ALL'); setDateFilter('ALL'); setSearchQuery(''); }}
-              className="flex items-center justify-center gap-1.5 text-sm font-bold text-slate-500 hover:text-slate-700 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors lg:border-0 lg:bg-transparent lg:px-0"
+              className="flex items-center justify-center gap-1.5 text-sm font-bold text-slate-500 hover:text-slate-700 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
             >
               <RotateCcw className="h-4 w-4" /> Reset
             </button>
@@ -374,34 +425,40 @@ export default function FranchiseDashboard() {
         </div>
 
 
-      {/* ── MOBILE CARD VIEW (< md) ─────────────────────────── */}
-      <div className="md:hidden flex-1 overflow-y-auto pb-32 px-1 pt-2 space-y-3">
+      {/* ── MOBILE CARD VIEW (< md) — Clean WhatsApp List Style ── */}
+      <div className="md:hidden flex-1 overflow-y-auto pb-32 px-2 pt-2 space-y-2.5">
         {filteredEnquiries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-            <Users className="h-10 w-10 mb-3 opacity-30" />
-            <p className="text-sm font-medium italic">No franchise enquiries yet.</p>
+            <Users className="h-12 w-12 mb-3 opacity-30" />
+            <p className="text-base font-bold text-slate-600">No franchise enquiries found.</p>
+            <p className="text-xs text-slate-400 mt-1">Try resetting filters or searching another keyword.</p>
           </div>
         ) : (
           filteredEnquiries.map(enquiry => (
             <div
               key={enquiry.id}
-              className="bg-white rounded-2xl border border-slate-200 shadow-sm relative"
+              className="bg-white rounded-2xl border border-slate-200/90 shadow-sm relative active:bg-slate-50 transition-colors"
             >
               {/* Card Header */}
-              <div className="p-4 flex items-center gap-3">
+              <div className="p-3.5 flex items-center gap-3">
                 {/* Avatar + Info — tap to open details */}
                 <div
                   className="flex-1 flex items-center gap-3 cursor-pointer min-w-0"
                   onClick={() => setSelectedEnquiryId(enquiry.id)}
                 >
-                  <div className="h-11 w-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-black text-lg shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-extrabold text-lg shrink-0 border border-blue-200/60 shadow-xs">
                     {enquiry.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-slate-900 text-sm truncate">{enquiry.name}</div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
-                      <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{enquiry.phone}</span>
-                      {enquiry.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{enquiry.location}</span>}
+                    <div className="font-extrabold text-slate-900 text-base truncate leading-tight">{enquiry.name}</div>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-slate-500 font-medium">
+                      <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5 text-slate-400" />{enquiry.phone}</span>
+                      {enquiry.location && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5 text-slate-400" />{enquiry.location}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -414,16 +471,16 @@ export default function FranchiseDashboard() {
                       setOpenStatusPopoverId(openStatusPopoverId === enquiry.id ? null : enquiry.id);
                       setOpenActionMenuId(null);
                     }}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] rounded-full font-bold border shadow-sm transition-transform active:scale-95 ${getStatusColor(enquiry.status)}`}
+                    className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full font-bold border shadow-xs transition-transform active:scale-95 ${getStatusColor(enquiry.status)}`}
                   >
                     {enquiry.status.replace(/_/g, ' ')}
-                    <ChevronDown className={`h-3 w-3 transition-transform ${openStatusPopoverId === enquiry.id ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openStatusPopoverId === enquiry.id ? 'rotate-180' : ''}`} />
                   </button>
 
                   {openStatusPopoverId === enquiry.id && (
-                    <div className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-white shadow-2xl border border-slate-200 p-2 z-[65] animate-in fade-in zoom-in">
-                      <div className="text-[10px] uppercase font-bold text-slate-400 mb-1.5 px-2">Change Status</div>
-                      <div className="max-h-48 overflow-y-auto flex flex-col gap-0.5">
+                    <div className="absolute right-0 top-full mt-1.5 w-52 rounded-2xl bg-white shadow-2xl border border-slate-200 p-2 z-[65] animate-in fade-in zoom-in-95 duration-150">
+                      <div className="text-xs uppercase font-extrabold text-slate-400 mb-1.5 px-2 tracking-wider">Change Status</div>
+                      <div className="max-h-56 overflow-y-auto flex flex-col gap-1">
                         {ENQUIRY_STATUSES.map(status => (
                           <button
                             key={status}
@@ -432,12 +489,12 @@ export default function FranchiseDashboard() {
                               handleStatusChange(enquiry.id, status);
                               setOpenStatusPopoverId(null);
                             }}
-                            className={`w-full text-left px-3 py-1.5 text-xs font-bold rounded-md flex justify-between items-center transition-colors ${
-                              enquiry.status === status ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'
+                            className={`w-full text-left px-3 py-2 text-xs font-bold rounded-xl flex justify-between items-center transition-colors ${
+                              enquiry.status === status ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
                             }`}
                           >
                             {status.replace(/_/g, ' ')}
-                            {enquiry.status === status && <CheckCircle2 className="h-3 w-3" />}
+                            {enquiry.status === status && <CheckCircle2 className="h-4 w-4" />}
                           </button>
                         ))}
                       </div>
@@ -447,20 +504,20 @@ export default function FranchiseDashboard() {
               </div>
 
               {/* Card Footer */}
-              <div className="px-4 pb-3 flex items-center justify-between border-t border-slate-100 pt-3">
+              <div className="px-3.5 pb-3 flex items-center justify-between border-t border-slate-100 pt-2.5">
                 <div className="flex items-center gap-2">
                   {/* Source badge */}
                   {enquiry.source === 'CHAT' ? (
-                    <span className="inline-flex items-center gap-1 bg-green-50 text-green-600 px-2 py-0.5 rounded-md text-[10px] font-bold border border-green-100">
-                      <Bot className="h-3 w-3" /> Chat
+                    <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-0.5 rounded-md text-xs font-bold border border-green-200">
+                      <Bot className="h-3.5 w-3.5" /> Chat
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md text-[10px] font-bold border border-blue-100">
-                      <FileText className="h-3 w-3" /> Form
+                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-md text-xs font-bold border border-blue-200">
+                      <FileText className="h-3.5 w-3.5" /> Form
                     </span>
                   )}
-                  <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
+                  <span className="text-xs font-medium text-slate-400 flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
                     {formatDate(enquiry.created_at)}
                   </span>
                 </div>
@@ -470,19 +527,19 @@ export default function FranchiseDashboard() {
                   {/* View details */}
                   <button
                     onClick={() => setSelectedEnquiryId(enquiry.id)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-colors"
+                    className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-colors"
                     title="View Details"
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4.5 w-4.5" />
                   </button>
 
                   {/* Delete */}
                   <button
                     onClick={() => handleDeleteLead(enquiry)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    className="p-2 rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                     title="Delete Lead"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4.5 w-4.5" />
                   </button>
                 </div>
               </div>
