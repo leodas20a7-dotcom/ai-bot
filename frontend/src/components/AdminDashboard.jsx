@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { LogOut, Settings, Database, X } from 'lucide-react';
 import FranchiseDashboard from './FranchiseDashboard';
 import LeadsPage from './LeadsPage';
@@ -9,12 +10,33 @@ import TopNav from './TopNav';
 import BottomNav from './BottomNav';
 
 export default function AdminDashboard({ onLogout }) {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
+
+  const setActiveTab = (tab) => {
+    if (tab === activeTab) return;
+    setSearchParams({ tab });
+  };
+
   const [highlightedLeadId, setHighlightedLeadId] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [collectBudget, setCollectBudget] = useState(() => {
     return localStorage.getItem('collect_budget_setting') === 'true';
   });
+
+  // Handle back button for Settings modal
+  useEffect(() => {
+    if (showSettingsModal) {
+      window.history.pushState({ modalOpen: 'settings' }, '');
+      const handlePopState = () => {
+        setShowSettingsModal(false);
+      };
+      window.addEventListener('popstate', handlePopState);
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [showSettingsModal]);
 
   const handleToggleBudgetSetting = async (val) => {
     setCollectBudget(val);

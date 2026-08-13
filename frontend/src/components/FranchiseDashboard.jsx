@@ -71,6 +71,29 @@ export default function FranchiseDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+
+  // Handle browser back button when any modal popup is open
+  const isAnyModalOpen = Boolean(selectedEnquiryId || draftReview || followUpChoice || scheduleReminder || showFilterModal);
+
+  useEffect(() => {
+    if (!isAnyModalOpen) return;
+
+    window.history.pushState({ modalOpen: true }, '');
+
+    const handlePopState = () => {
+      setSelectedEnquiryId(null);
+      setDraftReview(null);
+      setFollowUpChoice(null);
+      setScheduleReminder(null);
+      setShowFilterModal(false);
+      setIsStatusDropdownOpen(false);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isAnyModalOpen]);
   const [openStatusPopoverId, setOpenStatusPopoverId] = useState(null);
   const [openActionMenuId, setOpenActionMenuId] = useState(null);
   const [actionMenuMode, setActionMenuMode] = useState('main'); // 'main' or 'status'
