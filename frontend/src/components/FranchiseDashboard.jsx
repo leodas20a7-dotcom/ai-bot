@@ -14,6 +14,18 @@ const ENQUIRY_STATUSES = [
   'APPROVED', 'COMPLETED'
 ];
 
+const STATUS_FILTER_OPTIONS = [
+  { id: 'ALL', label: 'All Statuses', color: 'bg-slate-400' },
+  { id: 'ACTIVE', label: 'Active Only', color: 'bg-blue-500' },
+  { id: 'CLOSED', label: 'Closed/Won', color: 'bg-emerald-500' },
+  { id: 'NEW', label: 'New', color: 'bg-slate-500' },
+  { id: 'FIRST_CALL', label: 'First Call', color: 'bg-indigo-500' },
+  { id: 'INTERESTED', label: 'Interested', color: 'bg-amber-500' },
+  { id: 'READY_TO_PAY', label: 'Ready To Pay', color: 'bg-purple-500' },
+  { id: 'APPROVED', label: 'Approved', color: 'bg-teal-500' },
+  { id: 'NOT_INTERESTED', label: 'Not Interested', color: 'bg-rose-500' }
+];
+
 const getStatusColor = (status) => {
   if (['NEW', 'NO_RESPONSE'].includes(status)) return 'bg-slate-100 text-slate-700 border-slate-300';
   if (['FIRST_CALL'].includes(status)) return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -58,6 +70,7 @@ export default function FranchiseDashboard() {
   const [dateFilter, setDateFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [openStatusPopoverId, setOpenStatusPopoverId] = useState(null);
   const [openActionMenuId, setOpenActionMenuId] = useState(null);
   const [actionMenuMode, setActionMenuMode] = useState('main'); // 'main' or 'status'
@@ -728,6 +741,7 @@ export default function FranchiseDashboard() {
             fetchEnquiriesData(); // Refresh tasks
           }}
         />
+      )}
       {/* User-Friendly Filter Overlay Popup Window */}
       {showFilterModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
@@ -754,30 +768,51 @@ export default function FranchiseDashboard() {
               {/* Status Filter */}
               <div>
                 <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Lead Status</label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: 'ALL', label: 'All Statuses' },
-                    { id: 'ACTIVE', label: 'Active Only' },
-                    { id: 'CLOSED', label: 'Closed/Won' },
-                    { id: 'NEW', label: 'New' },
-                    { id: 'FIRST_CALL', label: 'First Call' },
-                    { id: 'INTERESTED', label: 'Interested' },
-                    { id: 'READY_TO_PAY', label: 'Ready To Pay' },
-                    { id: 'APPROVED', label: 'Approved' },
-                    { id: 'NOT_INTERESTED', label: 'Not Interested' }
-                  ].map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => setStatusFilter(opt.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
-                        statusFilter === opt.id
-                          ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
-                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                    className="w-full bg-slate-50 hover:bg-slate-100/80 border border-slate-200 text-slate-800 text-sm font-semibold rounded-2xl px-4 py-3 flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-xs"
+                  >
+                    <span className="font-bold text-slate-800 text-sm">
+                      {STATUS_FILTER_OPTIONS.find(o => o.id === statusFilter)?.label || 'All Statuses'}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180 text-blue-600' : ''}`} />
+                  </button>
+
+                  {isStatusDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setIsStatusDropdownOpen(false)}
+                      />
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200/80 rounded-2xl shadow-xl z-20 overflow-hidden p-1.5 space-y-0.5 max-h-64 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+                        {STATUS_FILTER_OPTIONS.map(opt => {
+                          const isSelected = statusFilter === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setStatusFilter(opt.id);
+                                setIsStatusDropdownOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                                isSelected
+                                  ? 'bg-blue-50 text-blue-700 shadow-xs font-bold'
+                                  : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                              }`}
+                            >
+                              <span className="text-sm font-semibold">{opt.label}</span>
+                              {isSelected && (
+                                <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
