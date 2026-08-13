@@ -57,6 +57,7 @@ export default function FranchiseDashboard() {
   const [sourceFilter, setSourceFilter] = useState('ALL');
   const [dateFilter, setDateFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [openStatusPopoverId, setOpenStatusPopoverId] = useState(null);
   const [openActionMenuId, setOpenActionMenuId] = useState(null);
   const [actionMenuMode, setActionMenuMode] = useState('main'); // 'main' or 'status'
@@ -321,10 +322,10 @@ export default function FranchiseDashboard() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col min-h-[400px]">
         
-        {/* Filter Bar — WhatsApp-Style Clean Layout */}
-        <div className="p-3 sm:p-4 border-b border-slate-200 bg-white flex flex-col gap-2.5 shrink-0">
+        {/* Filter Bar */}
+        <div className="p-3 sm:p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
           {/* Rounded Pill Search */}
-          <div className="relative w-full">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
@@ -335,92 +336,33 @@ export default function FranchiseDashboard() {
             />
           </div>
 
-          {/* Mobile Filter Chips (Horizontal Scrollable like WhatsApp: All, Active, Closed) */}
-          <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar pt-1">
-            {[
-              { id: 'ALL', label: 'All Leads' },
-              { id: 'ACTIVE', label: 'Active' },
-              { id: 'CLOSED', label: 'Closed/Won' },
-            ].map(chip => (
-              <button
-                key={chip.id}
-                onClick={() => setStatusFilter(chip.id)}
-                className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
-                  statusFilter === chip.id
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {chip.label}
-              </button>
-            ))}
-
-            <div className="h-4 w-px bg-slate-200 shrink-0 mx-1"></div>
-
-            {[
-              { id: 'ALL', label: 'All Sources' },
-              { id: 'CHAT', label: 'Chat' },
-              { id: 'FORM', label: 'Form' },
-            ].map(srcChip => (
-              <button
-                key={srcChip.id}
-                onClick={() => setSourceFilter(srcChip.id)}
-                className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
-                  sourceFilter === srcChip.id
-                    ? 'bg-slate-800 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {srcChip.label}
-              </button>
-            ))}
+          {/* Filter Button (Opens User-Friendly Overlay Popup) */}
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-between sm:justify-start">
+            <button
+              onClick={() => setShowFilterModal(true)}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all border shadow-xs ${
+                statusFilter !== 'ALL' || sourceFilter !== 'ALL' || dateFilter !== 'ALL'
+                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <Filter className="h-4 w-4 text-blue-600" />
+              <span>Filters</span>
+              {(statusFilter !== 'ALL' || sourceFilter !== 'ALL' || dateFilter !== 'ALL') && (
+                <span className="h-5 w-5 bg-blue-600 text-white rounded-full text-[10px] font-extrabold flex items-center justify-center">
+                  {[statusFilter !== 'ALL', sourceFilter !== 'ALL', dateFilter !== 'ALL'].filter(Boolean).length}
+                </span>
+              )}
+            </button>
 
             {(statusFilter !== 'ALL' || sourceFilter !== 'ALL' || dateFilter !== 'ALL' || searchQuery !== '') && (
               <button
                 onClick={() => { setStatusFilter('ALL'); setSourceFilter('ALL'); setDateFilter('ALL'); setSearchQuery(''); }}
-                className="whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-all shrink-0 flex items-center gap-1"
+                className="flex items-center gap-1 px-3.5 py-2.5 rounded-full text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all shrink-0"
               >
-                <RotateCcw className="h-3 w-3" /> Reset
+                <RotateCcw className="h-3.5 w-3.5" /> Reset
               </button>
             )}
-          </div>
-
-          {/* Desktop Filters (Hidden on Mobile) */}
-          <div className="hidden md:flex flex-wrap items-center gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="ACTIVE">Active Only</option>
-              <option value="CLOSED">Closed/Won</option>
-            </select>
-            <select
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value)}
-              className="text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">All Sources</option>
-              <option value="CHAT">Chat Leads</option>
-              <option value="FORM">Form Leads</option>
-            </select>
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">All Time</option>
-              <option value="TODAY">Today</option>
-              <option value="LAST_7_DAYS">Last 7 Days</option>
-              <option value="LAST_30_DAYS">Last 30 Days</option>
-            </select>
-            <button
-              onClick={() => { setStatusFilter('ALL'); setSourceFilter('ALL'); setDateFilter('ALL'); setSearchQuery(''); }}
-              className="flex items-center justify-center gap-1.5 text-sm font-bold text-slate-500 hover:text-slate-700 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
-            >
-              <RotateCcw className="h-4 w-4" /> Reset
-            </button>
           </div>
         </div>
 
@@ -786,6 +728,126 @@ export default function FranchiseDashboard() {
             fetchEnquiriesData(); // Refresh tasks
           }}
         />
+      {/* User-Friendly Filter Overlay Popup Window */}
+      {showFilterModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                  <Filter className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-lg">Filter Leads</h3>
+                  <p className="text-xs text-slate-500 font-medium">Refine your lead dashboard results</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowFilterModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              {/* Status Filter */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Lead Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'ALL', label: 'All Statuses' },
+                    { id: 'ACTIVE', label: 'Active Only' },
+                    { id: 'CLOSED', label: 'Closed/Won' },
+                    { id: 'NEW', label: 'New' },
+                    { id: 'FIRST_CALL', label: 'First Call' },
+                    { id: 'INTERESTED', label: 'Interested' },
+                    { id: 'READY_TO_PAY', label: 'Ready To Pay' },
+                    { id: 'APPROVED', label: 'Approved' },
+                    { id: 'NOT_INTERESTED', label: 'Not Interested' }
+                  ].map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setStatusFilter(opt.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                        statusFilter === opt.id
+                          ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Source Filter */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Lead Source</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'ALL', label: 'All Sources' },
+                    { id: 'CHAT', label: 'AI Chatbot' },
+                    { id: 'FORM', label: 'Enquiry Form' }
+                  ].map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setSourceFilter(opt.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                        sourceFilter === opt.id
+                          ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date Filter */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Time Period</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'ALL', label: 'All Time' },
+                    { id: 'TODAY', label: 'Today' },
+                    { id: 'LAST_7_DAYS', label: 'Last 7 Days' },
+                    { id: 'LAST_30_DAYS', label: 'Last 30 Days' }
+                  ].map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setDateFilter(opt.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                        dateFilter === opt.id
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+              <button
+                onClick={() => { setStatusFilter('ALL'); setSourceFilter('ALL'); setDateFilter('ALL'); setSearchQuery(''); }}
+                className="px-4 py-2.5 rounded-xl font-bold text-xs text-red-600 hover:bg-red-50 transition-colors"
+              >
+                Reset Filters
+              </button>
+              <button
+                onClick={() => setShowFilterModal(false)}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-colors"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
     </div>
