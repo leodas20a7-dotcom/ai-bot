@@ -13,6 +13,43 @@ const ENQUIRY_STATUSES = [
   'PAYMENT_PENDING', 'PAYMENT_RECEIVED', 'APPROVED', 'ONBOARDING', 'OPENED'
 ];
 
+// Helper to convert HTML to clean plain text
+const htmlToPlainText = (html) => {
+  if (!html) return '';
+  return html
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
+const formatTimelineDescription = (text) => {
+  if (!text) return '';
+  let clean = text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  if (/<[a-z][\s\S]*>/i.test(clean)) {
+    clean = htmlToPlainText(clean);
+  }
+  return clean;
+};
+
 export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -154,30 +191,6 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
       if (previewTemplate.type === 'EMAIL') {
         if (!data.email) throw new Error("No email address on file for this lead.");
 
-        // Convert HTML to clean plain text for Gmail compose URL
-        const htmlToPlainText = (html) => {
-          return html
-            // Block tags → newlines (before stripping)
-            .replace(/<\/p>/gi, '\n')
-            .replace(/<br\s*\/?>/gi, '\n')
-            .replace(/<\/div>/gi, '\n')
-            .replace(/<\/li>/gi, '\n')
-            .replace(/<li[^>]*>/gi, '• ')
-            // Strip remaining HTML tags
-            .replace(/<[^>]+>/g, '')
-            // Decode HTML entities
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            .replace(/&apos;/g, "'")
-            .replace(/&nbsp;/g, ' ')
-            // Clean up excessive blank lines
-            .replace(/\n{3,}/g, '\n\n')
-            .trim();
-        };
-
         const plainBody = htmlToPlainText(previewBody);
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -216,7 +229,7 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
       await supabase.from('enquiry_timeline').insert([{
         enquiry_id: enquiryId,
         action_type: previewTemplate.type === 'EMAIL' ? 'EMAIL_SENT' : 'WHATSAPP_SENT',
-        description: `Sent template: ${previewTemplate.name}\n\n${previewBody}`
+        description: `Sent template: ${previewTemplate.name}\n\n${htmlToPlainText(previewBody)}`
       }]);
       await fetchDetails();
       setPreviewTemplate(null);
@@ -251,9 +264,9 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
   const pendingTasks = data.tasks ? data.tasks.filter(t => t.status !== 'COMPLETED') : [];
 
   return (
-    <div className="fixed inset-0 z-[70] flex justify-end bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-[70] flex justify-end bg-slate-900/60 backdrop-blur-sm animate-in fade-in overflow-hidden">
       {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />}
-      <div className="bg-white shadow-2xl w-full max-w-md h-full flex flex-col overflow-hidden animate-in slide-in-from-right duration-300 border-l border-slate-200">
+      <div className="bg-white shadow-2xl w-full max-w-md h-full flex flex-col overflow-hidden animate-in slide-in-from-right duration-300 border-l border-slate-200 min-w-0">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
@@ -287,39 +300,39 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto bg-slate-50 relative p-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 relative p-6 min-w-0">
           
           {/* TAB: DETAILS */}
           {activeTab === 'details' && (
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 min-w-0">
               {/* Contact Info */}
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4">
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 min-w-0">
                 <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Contact Info</h3>
-                <div className="grid grid-cols-1 gap-3 text-sm flex-1">
-                  <div className="flex items-center gap-3 text-slate-700"><Phone className="h-4 w-4 text-slate-400"/> {data.phone}</div>
-                  {data.email && <div className="flex items-center gap-3 text-slate-700"><Mail className="h-4 w-4 text-slate-400"/> {data.email}</div>}
-                  <div className="flex items-center gap-3 text-slate-700"><MapPin className="h-4 w-4 text-slate-400"/> {data.location || 'N/A'}</div>
-                  <div className="flex items-center gap-3 text-slate-700"><Building className="h-4 w-4 text-slate-400"/> {data.investment_capacity || 'N/A'}</div>
+                <div className="grid grid-cols-1 gap-3 text-sm flex-1 min-w-0">
+                  <div className="flex items-center gap-3 text-slate-700 break-words min-w-0"><Phone className="h-4 w-4 text-slate-400 shrink-0"/> {data.phone}</div>
+                  {data.email && <div className="flex items-center gap-3 text-slate-700 break-words min-w-0"><Mail className="h-4 w-4 text-slate-400 shrink-0"/> {data.email}</div>}
+                  <div className="flex items-center gap-3 text-slate-700 break-words min-w-0"><MapPin className="h-4 w-4 text-slate-400 shrink-0"/> {data.location || 'N/A'}</div>
+                  <div className="flex items-center gap-3 text-slate-700 break-words min-w-0"><Building className="h-4 w-4 text-slate-400 shrink-0"/> {data.investment_capacity || 'N/A'}</div>
                 </div>
               </div>
 
               {/* Quick Actions (Templates) */}
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4">
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 min-w-0">
                 <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Quick Messages</h3>
                 
                 {previewTemplate ? (
-                  <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 animate-in fade-in">
+                  <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 animate-in fade-in min-w-0 overflow-hidden">
                     <div className="flex justify-between items-center mb-3 border-b border-slate-200 pb-2">
-                      <div className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                        {previewTemplate.type === 'EMAIL' ? <Mail className="h-4 w-4 text-slate-500"/> : <MessageSquare className="h-4 w-4 text-emerald-500"/>}
-                        {previewTemplate.name}
+                      <div className="font-bold text-slate-800 text-sm flex items-center gap-2 min-w-0">
+                        {previewTemplate.type === 'EMAIL' ? <Mail className="h-4 w-4 text-slate-500 shrink-0"/> : <MessageSquare className="h-4 w-4 text-emerald-500 shrink-0"/>}
+                        <span className="truncate">{previewTemplate.name}</span>
                       </div>
-                      <button onClick={() => setPreviewTemplate(null)} className="text-slate-400 hover:text-slate-600">
+                      <button onClick={() => setPreviewTemplate(null)} className="text-slate-400 hover:text-slate-600 shrink-0">
                         <X className="h-4 w-4" />
                       </button>
                     </div>
                     {previewTemplate.type === 'EMAIL' ? (
-                      <div className="mb-3">
+                      <div className="mb-3 max-w-full overflow-hidden">
                         <ReactQuill 
                           theme="snow" 
                           value={previewBody} 
@@ -329,14 +342,14 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
                       </div>
                     ) : (
                       <textarea 
-                        className="w-full text-sm font-mono text-slate-700 p-3 rounded-lg border border-slate-300 focus:border-red-500 outline-none mb-3"
+                        className="w-full text-sm font-mono text-slate-700 p-3 rounded-lg border border-slate-300 focus:border-red-500 outline-none mb-3 break-words resize-y"
                         rows={6}
                         value={previewBody}
                         onChange={(e) => setPreviewBody(e.target.value)}
                       />
                     )}
                     {previewTemplate.attachment_url && (
-                      <div className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg mb-3">
+                      <div className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg mb-3 break-all overflow-hidden">
                         Attachment: {previewTemplate.attachment_url}
                       </div>
                     )}
@@ -370,27 +383,27 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-3 min-w-0">
                     <button 
                       onClick={() => setSelectedChannel(null)}
                       className="text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center gap-1 self-start"
                     >
                       &larr; Back to Options
                     </button>
-                    <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-1 animate-in fade-in slide-in-from-right-4">
+                    <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-1 animate-in fade-in slide-in-from-right-4 min-w-0">
                       {templates.filter(t => t.type === selectedChannel).length > 0 ? templates.filter(t => t.type === selectedChannel).map(t => (
                         <button 
                           key={t.id}
                           onClick={() => handlePreviewTemplate(t)}
-                          className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50 text-left transition-colors group"
+                          className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50 text-left transition-colors group min-w-0"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`p-1.5 rounded-lg ${t.type === 'EMAIL' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-600'}`}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`p-1.5 rounded-lg shrink-0 ${t.type === 'EMAIL' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-600'}`}>
                               {t.type === 'EMAIL' ? <Mail className="h-4 w-4"/> : <MessageSquare className="h-4 w-4"/>}
                             </div>
-                            <span className="font-bold text-slate-700 text-sm group-hover:text-red-700">{t.name}</span>
+                            <span className="font-bold text-slate-700 text-sm group-hover:text-red-700 truncate">{t.name}</span>
                           </div>
-                          <span className="text-xs font-bold text-slate-400 group-hover:text-red-500">Preview &rarr;</span>
+                          <span className="text-xs font-bold text-slate-400 group-hover:text-red-500 shrink-0 ml-2">Preview &rarr;</span>
                         </button>
                       )) : (
                         <p className="text-sm text-slate-500 italic p-4 text-center border rounded-xl border-dashed">No {selectedChannel.toLowerCase()} templates found.</p>
@@ -404,23 +417,25 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
 
           {/* TAB: TIMELINE */}
           {activeTab === 'timeline' && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 min-h-full">
+            <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-100 min-h-full min-w-0 overflow-hidden">
               <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-6">
                 <Calendar className="h-4 w-4" /> Activity Timeline
               </h3>
               
-              <div className="relative border-l-2 border-slate-200 ml-3 space-y-6">
-                {data.timeline && data.timeline.length > 0 ? data.timeline.map((event, idx) => (
-                  <div key={event.id} className="relative pl-6">
+              <div className="relative border-l-2 border-slate-200 ml-2 sm:ml-3 space-y-6 min-w-0">
+                {data.timeline && data.timeline.length > 0 ? data.timeline.map((event) => (
+                  <div key={event.id} className="relative pl-5 sm:pl-6 min-w-0">
                     <div className="absolute -left-[9px] top-1 h-4 w-4 rounded-full bg-white border-2 border-red-500 shadow-sm"></div>
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="text-[10px] font-bold tracking-widest uppercase px-2 py-1 bg-slate-100 text-slate-500 rounded-lg">
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow min-w-0 overflow-hidden">
+                      <div className="flex justify-between items-center mb-2 gap-2 flex-wrap sm:flex-nowrap min-w-0">
+                        <div className="text-[10px] font-bold tracking-widest uppercase px-2 py-1 bg-slate-100 text-slate-500 rounded-lg shrink-0">
                           {event.action_type.replace(/_/g, ' ')}
                         </div>
-                        <div className="text-xs text-slate-400 font-medium">{formatDate(event.created_at)}</div>
+                        <div className="text-xs text-slate-400 font-medium shrink-0">{formatDate(event.created_at)}</div>
                       </div>
-                      <div className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{event.description}</div>
+                      <div className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere] min-w-0 overflow-hidden">
+                        {formatTimelineDescription(event.description)}
+                      </div>
                     </div>
                   </div>
                 )) : (

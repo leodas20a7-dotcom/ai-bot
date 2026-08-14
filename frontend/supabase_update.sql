@@ -63,5 +63,15 @@ CREATE INDEX IF NOT EXISTS idx_timeline_enquiry ON public.enquiry_timeline(enqui
 CREATE INDEX IF NOT EXISTS idx_tasks_enquiry ON public.follow_up_tasks(enquiry_id);
 CREATE INDEX IF NOT EXISTS idx_drafts_enquiry ON public.communication_drafts(enquiry_id);
 
+-- 6. Enable Realtime Notifications Publication on enquiries
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.enquiries;
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
+
 -- Success Confirmation Message
 SELECT 'Supabase database schema updated successfully!' AS result;
