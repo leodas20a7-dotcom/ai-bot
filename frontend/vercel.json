@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/groq/(.*)",
+      "destination": "/api/groq?path=$1"
+    },
+    {
+      "source": "/api/resend/(.*)",
+      "destination": "/api/resend?path=$1"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

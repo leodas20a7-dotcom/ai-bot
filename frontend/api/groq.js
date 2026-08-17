@@ -5,8 +5,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const subpath = req.url.replace(/^\/api\/groq/, '');
-    const targetUrl = `https://api.groq.com${subpath.startsWith('/') ? subpath : '/' + subpath}`;
+    let subpath = req.query?.path || '';
+    if (!subpath) {
+      subpath = req.url.split('?')[0].replace(/^\/api\/groq/, '');
+    }
+    if (subpath.startsWith('/')) {
+      subpath = subpath.slice(1);
+    }
+    const targetUrl = `https://api.groq.com/${subpath}`;
     
     const response = await fetch(targetUrl, {
       method: req.method,

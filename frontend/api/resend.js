@@ -5,8 +5,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const subpath = req.url.replace(/^\/api\/resend/, '');
-    const targetUrl = `https://api.resend.com${subpath.startsWith('/') ? subpath : '/' + subpath}`;
+    let subpath = req.query?.path || '';
+    if (!subpath) {
+      subpath = req.url.split('?')[0].replace(/^\/api\/resend/, '');
+    }
+    if (subpath.startsWith('/')) {
+      subpath = subpath.slice(1);
+    }
+    const targetUrl = `https://api.resend.com/${subpath}`;
 
     const response = await fetch(targetUrl, {
       method: req.method,
