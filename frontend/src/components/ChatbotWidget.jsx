@@ -20,6 +20,7 @@ ${collectBudget ? '3. THIRD TURN: After Location, ask for their **Investment Bud
 
 STRICT CONVERSATION RULES:
 - Ask ONE detail per turn. Never combine multiple questions in one turn.
+- NAME VALIDATION: If the user responds with a greeting (e.g. "hi", "hello", "hey", "good morning", "hola", "namaste") instead of their name, greet them back warmly and re-ask for their name. Never treat a greeting as their actual name!
 - PHONE NUMBER VALIDATION: Verify phone number has exactly 10 digits. If not 10 digits, politely ask them to re-enter a valid 10-digit number.
 `;
 
@@ -105,10 +106,17 @@ export default function ChatbotWidget() {
     setMessages(newMessages);
     setIsLoading(true);
 
-    // Precise JS digit validation to prevent LLM token counting hallucination
+    // Precise JS digit validation & greeting validation
     const digitsOnly = userMessage.replace(/\D/g, '');
+    const cleanWord = userMessage.toLowerCase().replace(/[^a-z]/g, '');
+    const GREETINGS = ['hi', 'hello', 'hey', 'hlo', 'hlw', 'hola', 'namaste', 'goodmorning', 'goodevening', 'goodafternoon'];
+    
     let systemHint = '';
-    if (digitsOnly.length === 10) {
+    const userMsgCount = newMessages.filter(m => m.role === 'user').length;
+    
+    if (userMsgCount === 1 && GREETINGS.includes(cleanWord)) {
+      systemHint = `[SYSTEM NOTE: User responded with a greeting "${userMessage}". Greet them back politely and ask for their full name. DO NOT treat "${userMessage}" as their name.]`;
+    } else if (digitsOnly.length === 10) {
       systemHint = `[SYSTEM NOTE: User provided phone number "${digitsOnly}" which is VALID (exactly 10 digits). Accept it as valid immediately and output the final summary.]`;
     } else if (digitsOnly.length > 0 && digitsOnly.length !== 10 && !(digitsOnly.length === 12 && digitsOnly.startsWith('91'))) {
       systemHint = `[SYSTEM NOTE: User provided number "${userMessage}" which has ${digitsOnly.length} digits. It is NOT 10 digits. Ask them politely to re-enter a valid 10-digit mobile number.]`;
