@@ -1,5 +1,9 @@
 export default async function handler(req, res) {
-  const apiKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
+  let apiKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || '';
+  apiKey = apiKey.trim().replace(/^["']|["']$/g, '');
+  if (apiKey.includes('=')) {
+    apiKey = apiKey.split('=').pop().trim().replace(/^["']|["']$/g, '');
+  }
   if (!apiKey) {
     return res.status(500).json({ error: 'Groq API Key not configured on server' });
   }

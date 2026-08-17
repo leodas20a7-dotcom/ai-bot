@@ -1,5 +1,9 @@
 export default async function handler(req, res) {
-  const apiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
+  let apiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY || '';
+  apiKey = apiKey.trim().replace(/^["']|["']$/g, '');
+  if (apiKey.includes('=')) {
+    apiKey = apiKey.split('=').pop().trim().replace(/^["']|["']$/g, '');
+  }
   if (!apiKey) {
     return res.status(500).json({ error: 'Resend API Key not configured on server' });
   }
