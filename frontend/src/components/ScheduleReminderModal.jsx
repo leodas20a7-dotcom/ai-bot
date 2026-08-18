@@ -82,7 +82,7 @@ export default function ScheduleReminderModal({ enquiry, onClose, onSaved }) {
             ? `whatsapp://send?phone=${phone}&text=${encodeURIComponent(confirmationMsg)}`
             : `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(confirmationMsg)}`;
 
-          window.open(waUrl, '_blank');
+          window.open(waUrl, 'whatsapp_web');
 
           // Log to timeline
           try {
@@ -102,7 +102,7 @@ export default function ScheduleReminderModal({ enquiry, onClose, onSaved }) {
             ? `mailto:${encodeURIComponent(enquiry.email)}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(confirmationMsg)}`
             : `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(enquiry.email)}&su=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(confirmationMsg)}`;
 
-          window.open(mailUrl, '_blank');
+          window.open(mailUrl, 'email_composer');
 
           // Log to timeline
           try {

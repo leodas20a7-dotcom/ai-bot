@@ -33,7 +33,23 @@ const loadDynamicTemplate = async (channel, status, enquiry) => {
   return { body: `Default ${channel} message for ${status}. (Template missing in settings)`, subject: `Update for ${enquiry.name}` };
 };
 
-// Replaced by template name as subject
+const htmlToPlainText = (html) => {
+  if (!html) return '';
+  return html
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n\s*\n/g, '\n\n')
+    .trim();
+};
 
 export default function DraftReviewModal({ enquiry, newStatus, onClose, onSent }) {
   const [selectedChannel, setSelectedChannel] = useState(null); // 'EMAIL' or 'WHATSAPP'
@@ -62,11 +78,21 @@ export default function DraftReviewModal({ enquiry, newStatus, onClose, onSent }
   const handleSend = async () => {
     setIsSending(true);
     try {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
       if (selectedChannel === 'EMAIL') {
         if (enquiry.email) {
-          await sendEmail(enquiry.email, subject, content);
+          const plainBody = htmlToPlainText(content);
+          if (isMobile) {
+            const mailtoUrl = `mailto:${encodeURIComponent(enquiry.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainBody)}`;
+            window.location.href = mailtoUrl;
+          } else {
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(enquiry.email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainBody)}`;
+            window.open(gmailUrl, 'email_composer');
+          }
+          showToast('Email composer opened with pre-filled details!', 'success');
         } else {
-          showToast('Warning: No email address found. Marking as approved without sending.', 'warning');
+          showToast('Warning: No email address found.', 'warning');
         }
         
         await saveCommunicationDraft({
@@ -91,12 +117,14 @@ export default function DraftReviewModal({ enquiry, newStatus, onClose, onSent }
             .replace(/  +/g, ' ')
             .trim();
           const encodedText = encodeURIComponent(cleanContent);
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
           if (isMobile) {
             window.location.href = `whatsapp://send?phone=${phoneWithCountry}&text=${encodedText}`;
           } else {
-            window.open(`https://web.whatsapp.com/send?phone=${phoneWithCountry}&text=${encodedText}`, '_blank');
+            window.open(`https://web.whatsapp.com/send?phone=${phoneWithCountry}&text=${encodedText}`, 'whatsapp_web');
           }
+          showToast('WhatsApp Web opened with pre-filled message!', 'success');
+        } else {
+          showToast('Warning: No phone number found.', 'warning');
         }
         
         await saveCommunicationDraft({
@@ -111,7 +139,7 @@ export default function DraftReviewModal({ enquiry, newStatus, onClose, onSent }
       onSent(); // Completes the status change flow
     } catch (err) {
       console.error(err);
-      showToast(`Failed to send: ${err.message}`, 'error');
+      showToast(`Failed to open message: ${err.message}`, 'error');
     } finally {
       setIsSending(false);
     }

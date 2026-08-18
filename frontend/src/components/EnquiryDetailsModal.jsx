@@ -201,7 +201,7 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
         } else {
           // Desktop Web Gmail Compose
           const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(data.email)}&su=${encodeURIComponent(previewTemplate.name)}&body=${encodeURIComponent(plainBody)}`;
-          window.open(gmailUrl, '_blank');
+          window.open(gmailUrl, 'email_composer');
         }
 
       } else {
@@ -220,7 +220,7 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
         } else {
           // Desktop WhatsApp Web link
           const waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(cleanMessage)}`;
-          window.open(waUrl, '_blank');
+          window.open(waUrl, 'whatsapp_web');
         }
       }
 
