@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Save, Clock, Calendar, MessageSquare, Mail, Send } from 'lucide-react';
 import { createFollowUpTask, getTemplates } from '../lib/api';
 import { useDialog } from './Dialog';
-import { openOrFocusTab } from '../lib/openSingleTab';
+import { openOrFocusTab, triggerWhatsAppMessage } from '../lib/openSingleTab';
 
 export default function ScheduleReminderModal({ enquiry, onClose, onSaved }) {
   const [date, setDate] = useState('');
@@ -76,18 +76,7 @@ export default function ScheduleReminderModal({ enquiry, onClose, onSaved }) {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
         if (channel === 'WHATSAPP' && enquiry.phone) {
-          let phone = enquiry.phone.replace(/\D/g, '');
-          if (phone.length === 10) phone = '91' + phone;
-
-          const waUrl = isMobile 
-            ? `whatsapp://send?phone=${phone}&text=${encodeURIComponent(confirmationMsg)}`
-            : `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(confirmationMsg)}`;
-
-          if (isMobile) {
-            window.open(waUrl, '_blank');
-          } else {
-            openOrFocusTab('WHATSAPP', waUrl);
-          }
+          triggerWhatsAppMessage(enquiry.phone, confirmationMsg);
 
           // Log to timeline
           try {

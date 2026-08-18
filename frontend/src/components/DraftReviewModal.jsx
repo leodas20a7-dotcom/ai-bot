@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { sendEmail, saveCommunicationDraft, getTemplates } from '../lib/api';
 import { useDialog } from './Dialog';
 import { X, Send, Mail, MessageCircle, ArrowRight } from 'lucide-react';
-import { openOrFocusTab } from '../lib/openSingleTab';
+import { openOrFocusTab, triggerWhatsAppMessage } from '../lib/openSingleTab';
 
 const loadDynamicTemplate = async (channel, status, enquiry) => {
   try {
@@ -105,26 +105,8 @@ export default function DraftReviewModal({ enquiry, newStatus, onClose, onSent }
         });
       } else if (selectedChannel === 'WHATSAPP') {
         if (enquiry.phone) {
-          const cleanPhone = enquiry.phone.replace(/\D/g, '');
-          const phoneWithCountry = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-          // Strip all emojis and broken chars before sending
-          const cleanContent = content
-            .replace(/\uFFFD/g, '')
-            .replace(/[\u25A0-\u25FF]/g, '')
-            .replace(/[\u2600-\u27BF]/g, '')
-            .replace(/[\uFE00-\uFE0F]/g, '')
-            .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
-            .replace(/[\u{2300}-\u{23FF}]/gu, '')
-            .replace(/  +/g, ' ')
-            .trim();
-          const encodedText = encodeURIComponent(cleanContent);
-          if (isMobile) {
-            window.location.href = `whatsapp://send?phone=${phoneWithCountry}&text=${encodedText}`;
-          } else {
-            const waUrl = `https://web.whatsapp.com/send?phone=${phoneWithCountry}&text=${encodedText}`;
-            openOrFocusTab('WHATSAPP', waUrl);
-          }
-          showToast('WhatsApp Web opened with pre-filled message!', 'success');
+          triggerWhatsAppMessage(enquiry.phone, content);
+          showToast('WhatsApp launched with pre-filled message!', 'success');
         } else {
           showToast('Warning: No phone number found.', 'warning');
         }

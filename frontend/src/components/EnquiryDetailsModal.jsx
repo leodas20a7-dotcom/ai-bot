@@ -5,7 +5,7 @@ import { X, User, Phone, Mail, MapPin, Building, Calendar, Clock, CheckCircle2, 
 import DraftReviewModal from './DraftReviewModal';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { openOrFocusTab } from '../lib/openSingleTab';
+import { openOrFocusTab, triggerWhatsAppMessage } from '../lib/openSingleTab';
 
 const ENQUIRY_STATUSES = [
   'NEW', 'ASSIGNED', 'FIRST_CALL', 'INTERESTED', 'CALL_LATER',
@@ -207,22 +207,8 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
 
       } else {
         if (!data.phone) throw new Error("No phone number on file for this lead.");
-        let phone = data.phone.replace(/\D/g, '');
-        if (phone.length === 10) phone = '91' + phone; // Default to India if 10 digits
-
-        // Sanitize: strip all emojis and corrupted chars before building WhatsApp URL
         const cleanMessage = sanitizeTemplateText(previewBody);
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        if (isMobile) {
-          // Direct native mobile WhatsApp app launch
-          const mobileWaUrl = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(cleanMessage)}`;
-          window.location.href = mobileWaUrl;
-        } else {
-          // Desktop WhatsApp Web link
-          const waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(cleanMessage)}`;
-          openOrFocusTab('WHATSAPP', waUrl);
-        }
+        triggerWhatsAppMessage(data.phone, cleanMessage);
       }
 
       // Log to timeline
