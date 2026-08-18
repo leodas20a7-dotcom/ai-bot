@@ -5,6 +5,7 @@ import { X, User, Phone, Mail, MapPin, Building, Calendar, Clock, CheckCircle2, 
 import DraftReviewModal from './DraftReviewModal';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import { openOrFocusTab } from '../lib/openSingleTab';
 
 const ENQUIRY_STATUSES = [
   'NEW', 'ASSIGNED', 'FIRST_CALL', 'INTERESTED', 'CALL_LATER',
@@ -201,7 +202,7 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
         } else {
           // Desktop Web Gmail Compose
           const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(data.email)}&su=${encodeURIComponent(previewTemplate.name)}&body=${encodeURIComponent(plainBody)}`;
-          window.open(gmailUrl, 'email_composer');
+          openOrFocusTab('EMAIL', gmailUrl);
         }
 
       } else {
@@ -220,7 +221,7 @@ export default function EnquiryDetailsModal({ enquiryId, onClose, onUpdate }) {
         } else {
           // Desktop WhatsApp Web link
           const waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(cleanMessage)}`;
-          window.open(waUrl, 'whatsapp_web');
+          openOrFocusTab('WHATSAPP', waUrl);
         }
       }
 

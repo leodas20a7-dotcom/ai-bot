@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Save, Clock, Calendar, MessageSquare, Mail, Send } from 'lucide-react';
 import { createFollowUpTask, getTemplates } from '../lib/api';
 import { useDialog } from './Dialog';
+import { openOrFocusTab } from '../lib/openSingleTab';
 
 export default function ScheduleReminderModal({ enquiry, onClose, onSaved }) {
   const [date, setDate] = useState('');
@@ -82,7 +83,11 @@ export default function ScheduleReminderModal({ enquiry, onClose, onSaved }) {
             ? `whatsapp://send?phone=${phone}&text=${encodeURIComponent(confirmationMsg)}`
             : `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(confirmationMsg)}`;
 
-          window.open(waUrl, 'whatsapp_web');
+          if (isMobile) {
+            window.open(waUrl, '_blank');
+          } else {
+            openOrFocusTab('WHATSAPP', waUrl);
+          }
 
           // Log to timeline
           try {
@@ -102,7 +107,11 @@ export default function ScheduleReminderModal({ enquiry, onClose, onSaved }) {
             ? `mailto:${encodeURIComponent(enquiry.email)}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(confirmationMsg)}`
             : `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(enquiry.email)}&su=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(confirmationMsg)}`;
 
-          window.open(mailUrl, 'email_composer');
+          if (isMobile) {
+            window.open(mailUrl, '_blank');
+          } else {
+            openOrFocusTab('EMAIL', mailUrl);
+          }
 
           // Log to timeline
           try {

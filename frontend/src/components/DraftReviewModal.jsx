@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { sendEmail, saveCommunicationDraft, getTemplates } from '../lib/api';
 import { useDialog } from './Dialog';
 import { X, Send, Mail, MessageCircle, ArrowRight } from 'lucide-react';
+import { openOrFocusTab } from '../lib/openSingleTab';
 
 const loadDynamicTemplate = async (channel, status, enquiry) => {
   try {
@@ -88,7 +89,7 @@ export default function DraftReviewModal({ enquiry, newStatus, onClose, onSent }
             window.location.href = mailtoUrl;
           } else {
             const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(enquiry.email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainBody)}`;
-            window.open(gmailUrl, 'email_composer');
+            openOrFocusTab('EMAIL', gmailUrl);
           }
           showToast('Email composer opened with pre-filled details!', 'success');
         } else {
@@ -120,7 +121,8 @@ export default function DraftReviewModal({ enquiry, newStatus, onClose, onSent }
           if (isMobile) {
             window.location.href = `whatsapp://send?phone=${phoneWithCountry}&text=${encodedText}`;
           } else {
-            window.open(`https://web.whatsapp.com/send?phone=${phoneWithCountry}&text=${encodedText}`, 'whatsapp_web');
+            const waUrl = `https://web.whatsapp.com/send?phone=${phoneWithCountry}&text=${encodedText}`;
+            openOrFocusTab('WHATSAPP', waUrl);
           }
           showToast('WhatsApp Web opened with pre-filled message!', 'success');
         } else {
